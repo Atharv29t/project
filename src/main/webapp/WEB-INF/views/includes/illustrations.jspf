@@ -1,0 +1,123 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <symbol id="il-boy" viewBox="0 0 200 200">
+        <defs>
+            <linearGradient id="ilBoyShirt" x1="60" y1="135" x2="145" y2="190" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FFD36A"/>
+                <stop offset="1" stop-color="#F59A2B"/>
+            </linearGradient>
+            <linearGradient id="ilBoySkin" x1="86" y1="56" x2="126" y2="128" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FFD7B2"/>
+                <stop offset="1" stop-color="#E9A275"/>
+            </linearGradient>
+            <linearGradient id="ilBoyHair" x1="70" y1="44" x2="128" y2="88" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#51301F"/>
+                <stop offset="1" stop-color="#261108"/>
+            </linearGradient>
+        </defs>
+        <ellipse cx="103" cy="187" rx="57" ry="9" fill="#1D1408" opacity=".12"/>
+        <path d="M47 198c3-33 24-49 55-49s53 16 56 49H47Z" fill="url(#ilBoyShirt)"/>
+        <path d="M91 126h24v30c-4 7-20 7-24 0v-30Z" fill="url(#ilBoySkin)"/>
+        <ellipse cx="103" cy="93" rx="39" ry="43" fill="url(#ilBoySkin)"/>
+        <circle cx="64" cy="96" r="8" fill="#E9A275"/>
+        <circle cx="142" cy="96" r="8" fill="#E9A275"/>
+        <path d="M64 89c-5-34 17-55 42-55 28 0 45 17 41 52-9-5-15-16-17-28-12 13-30 19-52 17-5 8-9 12-14 14Z" fill="url(#ilBoyHair)"/>
+        <path d="M84 84c3-3 8-3 11 0" fill="none" stroke="#3A2114" stroke-width="3" stroke-linecap="round"/>
+        <path d="M111 84c3-3 8-3 11 0" fill="none" stroke="#3A2114" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="90" cy="96" rx="3.6" ry="4.4" fill="#2A170E"/>
+        <ellipse cx="117" cy="96" rx="3.6" ry="4.4" fill="#2A170E"/>
+        <path d="M98 112c3-4 8-4 11 0" fill="none" stroke="#8E3B33" stroke-width="3" stroke-linecap="round"/>
+        <path d="M132 142c-8 8-12 17-11 27" fill="none" stroke="#E9A275" stroke-width="15" stroke-linecap="round"/>
+        <circle cx="119" cy="168" r="10" fill="#F3B186"/>
+        <path d="M118 166c-4-3-7-5-10-4" fill="none" stroke="#D08A61" stroke-width="2.5" stroke-linecap="round"/>
+    </symbol>
+
+    <symbol id="il-girl-question" viewBox="0 0 200 200">
+        <defs>
+            <linearGradient id="ilGirlQShirt" x1="55" y1="143" x2="145" y2="196" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FFC447"/>
+                <stop offset="1" stop-color="#E58A0C"/>
+            </linearGradient>
+            <linearGradient id="ilGirlQSkin" x1="84" y1="58" x2="126" y2="132" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FFDEC3"/>
+                <stop offset="1" stop-color="#F0B086"/>
+            </linearGradient>
+            <linearGradient id="ilGirlQHair" x1="55" y1="52" x2="150" y2="148" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#E75D35"/>
+                <stop offset="1" stop-color="#A52A0C"/>
+            </linearGradient>
+        </defs>
+        <ellipse cx="102" cy="188" rx="58" ry="9" fill="#1D1408" opacity=".12"/>
+        <path d="M38 198c5-36 26-54 65-54 37 0 57 18 61 54H38Z" fill="url(#ilGirlQShirt)"/>
+        <path d="M66 78c-8 42-11 72 6 96 14 11 47 11 61 0 17-24 13-54 5-96H66Z" fill="url(#ilGirlQHair)"/>
+        <path d="M91 129h23v30c-5 7-18 7-23 0v-30Z" fill="url(#ilGirlQSkin)"/>
+        <ellipse cx="102" cy="96" rx="36" ry="40" fill="url(#ilGirlQSkin)"/>
+        <path d="M67 90c-2-31 16-49 37-49 24 0 40 18 36 51-10-2-18-9-23-20-12 9-24 13-39 11-3 4-7 6-11 7Z" fill="url(#ilGirlQHair)"/>
+        <ellipse cx="90" cy="98" rx="3.5" ry="4.5" fill="#2A170E"/>
+        <ellipse cx="115" cy="98" rx="3.5" ry="4.5" fill="#2A170E"/>
+        <path d="M96 113c4-3 8-3 11 0" fill="none" stroke="#8E3B33" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="87" cy="107" r="4" fill="#F09A91" opacity=".55"/>
+        <circle cx="119" cy="107" r="4" fill="#F09A91" opacity=".55"/>
+        <path d="M57 158c-13 4-20 13-21 26" fill="none" stroke="#F0B086" stroke-width="14" stroke-linecap="round"/>
+        <circle cx="35" cy="186" r="9" fill="#F5BE96"/>
+    </symbol>
+
+    <symbol id="il-girl-trophy" viewBox="0 0 200 200">
+        <defs>
+            <linearGradient id="ilGirlTShirt" x1="55" y1="143" x2="145" y2="198" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FF7250"/>
+                <stop offset="1" stop-color="#D7351D"/>
+            </linearGradient>
+            <linearGradient id="ilGirlTSkin" x1="84" y1="58" x2="126" y2="132" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FFD9BE"/>
+                <stop offset="1" stop-color="#ECA981"/>
+            </linearGradient>
+            <linearGradient id="ilGirlTHair" x1="62" y1="42" x2="142" y2="116" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#4B2515"/>
+                <stop offset="1" stop-color="#1D0A04"/>
+            </linearGradient>
+            <linearGradient id="ilGirlTTrophy" x1="88" y1="14" x2="116" y2="58" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FFE680"/>
+                <stop offset="1" stop-color="#E39A13"/>
+            </linearGradient>
+        </defs>
+        <ellipse cx="102" cy="188" rx="58" ry="9" fill="#1D1408" opacity=".12"/>
+        <path d="M42 198c4-36 25-54 62-54 36 0 56 18 60 54H42Z" fill="url(#ilGirlTShirt)"/>
+        <path d="M132 64c22-8 31 8 23 28-7 18-25 23-36 16 12-12 17-28 13-44Z" fill="url(#ilGirlTHair)"/>
+        <path d="M90 129h23v30c-5 7-18 7-23 0v-30Z" fill="url(#ilGirlTSkin)"/>
+        <ellipse cx="102" cy="95" rx="36" ry="40" fill="url(#ilGirlTSkin)"/>
+        <path d="M66 79c-1-27 14-42 36-42 24 0 39 16 37 44-18 2-34-4-48-17-7 8-15 13-25 15Z" fill="url(#ilGirlTHair)"/>
+        <rect x="68" y="63" width="69" height="10" rx="5" fill="#B42B19"/>
+        <path d="M85 96c3-4 8-4 11 0" fill="none" stroke="#2A170E" stroke-width="3" stroke-linecap="round"/>
+        <path d="M109 96c3-4 8-4 11 0" fill="none" stroke="#2A170E" stroke-width="3" stroke-linecap="round"/>
+        <path d="M92 108c5 7 15 7 20 0" fill="none" stroke="#8E3B33" stroke-width="3" stroke-linecap="round"/>
+        <path d="M65 155c-12-11-18-23-18-35" fill="none" stroke="#ECA981" stroke-width="13" stroke-linecap="round"/>
+        <path d="M140 155c13-11 19-23 19-35" fill="none" stroke="#ECA981" stroke-width="13" stroke-linecap="round"/>
+        <g>
+            <path d="M85 24h34l-3 20c-2 7-10 11-14 11s-12-4-14-11l-3-20Z" fill="url(#ilGirlTTrophy)"/>
+            <path d="M85 28h-9c-5 0-8 4-7 9 1 8 7 13 15 13" fill="none" stroke="#E39A13" stroke-width="5" stroke-linecap="round"/>
+            <path d="M119 28h9c5 0 8 4 7 9-1 8-7 13-15 13" fill="none" stroke="#E39A13" stroke-width="5" stroke-linecap="round"/>
+            <path d="M96 55h12v9H96z" fill="#E39A13"/>
+            <rect x="90" y="64" width="24" height="7" rx="3" fill="#B97606"/>
+            <path d="m102 31 2 5 5 .7-4 3.5.9 5.1-4.4-2.4-4.4 2.4.9-5.1-4-3.5 5-.7 2-5Z" fill="#FFF8D6"/>
+        </g>
+    </symbol>
+
+    <symbol id="il-trophy" viewBox="0 0 120 120">
+        <defs>
+            <linearGradient id="ilTrophyGold" x1="38" y1="22" x2="88" y2="98" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FFE887"/>
+                <stop offset=".55" stop-color="#F5B82E"/>
+                <stop offset="1" stop-color="#C67B08"/>
+            </linearGradient>
+        </defs>
+        <ellipse cx="60" cy="109" rx="27" ry="5" fill="#1D1408" opacity=".12"/>
+        <rect x="38" y="98" width="44" height="9" rx="4" fill="#9B5D05"/>
+        <rect x="44" y="91" width="32" height="9" rx="3" fill="url(#ilTrophyGold)"/>
+        <path d="M53 74h14l-2 19H55l-2-19Z" fill="url(#ilTrophyGold)"/>
+        <path d="M25 33c-11 0-14 9-11 17 3 9 11 15 21 14" fill="none" stroke="url(#ilTrophyGold)" stroke-width="7" stroke-linecap="round"/>
+        <path d="M95 33c11 0 14 9 11 17-3 9-11 15-21 14" fill="none" stroke="url(#ilTrophyGold)" stroke-width="7" stroke-linecap="round"/>
+        <path d="M30 25h60l-6 34c-3 12-14 20-24 20s-21-8-24-20l-6-34Z" fill="url(#ilTrophyGold)"/>
+        <path d="M60 36l3.3 7 7.7 1-5.7 5.3 1.5 7.6-6.8-3.8-6.8 3.8 1.5-7.6-5.7-5.3 7.7-1L60 36Z" fill="#FFFBE8"/>
+    </symbol>
+</svg>

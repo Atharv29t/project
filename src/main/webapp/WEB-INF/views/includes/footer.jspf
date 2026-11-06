@@ -1,0 +1,68 @@
+</main>
+
+<c:set var="playHref" value="${ctx}/#quizPicker" />
+<c:set var="reviewHref" value="${ctx}/#quizPicker" />
+<c:set var="playLabel" value="Play" />
+<c:if test="${not empty sessionScope.attempt}">
+    <c:set var="playHref" value="${ctx}/quiz" />
+    <c:set var="playLabel" value="Resume" />
+</c:if>
+<c:if test="${not empty sessionScope.lastResult}">
+    <c:set var="reviewHref" value="${ctx}/result" />
+</c:if>
+<c:if test="${empty sessionScope.currentUser}">
+    <c:set var="playHref" value="${ctx}/login" />
+    <c:set var="reviewHref" value="${ctx}/login" />
+    <c:set var="playLabel" value="Log in" />
+</c:if>
+
+<nav class="mobile-tabs" aria-label="Mobile navigation">
+    <a class="tab-item ${activeNav eq 'home' ? 'is-active' : ''}" href="${ctx}/">
+        <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+        <span>Home</span>
+    </a>
+    <a class="tab-item" href="${ctx}/#quizPicker">
+        <svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg>
+        <span>Tracks</span>
+    </a>
+    <a class="tab-play" href="${playHref}" aria-label="${playLabel}">
+        <span class="tab-play-btn"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span>
+        <span>${playLabel}</span>
+    </a>
+    <a class="tab-item ${activeNav eq 'leaderboard' ? 'is-active' : ''}" href="${ctx}/leaderboard">
+        <svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>
+        <span>Board</span>
+    </a>
+    <a class="tab-item ${activeNav eq 'result' ? 'is-active' : ''}" href="${reviewHref}">
+        <svg class="icon" aria-hidden="true"><use href="#i-review"/></svg>
+        <span>Review</span>
+    </a>
+</nav>
+
+<footer class="site-footer">
+    <div class="container footer-row">
+        <div class="footer-brand">
+            <span class="brand-mark small" aria-hidden="true">
+                <svg viewBox="0 0 32 32" fill="none">
+                    <rect x="3" y="3" width="26" height="26" rx="8" fill="#F26430"/>
+                    <path d="M12 11.5a4.2 4.2 0 1 1 6.7 3.4c-1.5 1.1-2.2 1.9-2.2 3.3" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+                    <circle cx="16.5" cy="22.5" r="1.6" fill="#fff"/>
+                </svg>
+            </span>
+            <span>Quizly</span>
+        </div>
+        <p>Short multiple-choice tracks with a full answer review.</p>
+        <div class="tech-chips">
+            <span>Java 17</span>
+            <span>Servlets</span>
+            <span>JSP + JSTL</span>
+            <span>Lambdas</span>
+            <span>Collections</span>
+            <span>Heaps</span>
+        </div>
+    </div>
+</footer>
+
+<script defer src="${ctx}/assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<c:set var="ctx" value="${pageContext.request.contextPath}" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Quizly is a small multiple-choice quiz app built with Java 17, Servlets, JSP, lambda expressions and collections.">
+    <title><c:out value="${empty pageTitle ? 'Online quizzes' : pageTitle}" /> · Quizly</title>
+    <link rel="icon" type="image/svg+xml" href="${ctx}/favicon.svg">
+    <link rel="stylesheet" href="${ctx}/assets/css/styles.css">
+</head>
+<body class="page-${empty activeNav ? 'home' : activeNav}${result.isPassed() ? ' win' : ''}">
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<%@ include file="icons.jspf" %>
+<%@ include file="illustrations.jspf" %>
+
+<header class="site-header">
+    <div class="container nav-row">
+        <a class="brand" href="${ctx}/" aria-label="Quizly home">
+            <span class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 32 32" fill="none">
+                    <rect x="3" y="3" width="26" height="26" rx="8" fill="#F26430"/>
+                    <path d="M12 11.5a4.2 4.2 0 1 1 6.7 3.4c-1.5 1.1-2.2 1.9-2.2 3.3" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+                    <circle cx="16.5" cy="22.5" r="1.6" fill="#fff"/>
+                </svg>
+            </span>
+            <span class="brand-label">Quizly</span>
+        </a>
+
+        <nav class="site-nav" aria-label="Main navigation">
+            <a href="${ctx}/" class="${activeNav eq 'home' ? 'is-active' : ''}">Quizzes</a>
+            <a href="${ctx}/leaderboard" class="${activeNav eq 'leaderboard' ? 'is-active' : ''}">Leaderboard</a>
+            <c:if test="${not empty sessionScope.currentUser}">
+                <a href="${ctx}/profile" class="${activeNav eq 'profile' ? 'is-active' : ''}">My scores</a>
+            </c:if>
+        </nav>
+
+        <div class="nav-actions">
+            <c:choose>
+                <c:when test="${not empty sessionScope.currentUser}">
+                    <a class="player-chip" href="${ctx}/profile" title="Open your profile">
+                        <span class="player-avatar">${fn:escapeXml(sessionScope.currentUser.initials)}</span>
+                        <span><c:out value="${sessionScope.currentUser.name}" /></span>
+                    </a>
+                    <form class="logout-form" method="post" action="${ctx}/logout">
+                        <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                        <button class="logout-btn" type="submit" title="Log out">
+                            <svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg>
+                            <span>Log out</span>
+                        </button>
+                    </form>
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.attempt}">
+                            <a class="btn btn-primary btn-sm" href="${ctx}/quiz">Resume</a>
+                        </c:when>
+                        <c:otherwise>
+                            <a class="btn btn-primary btn-sm" href="${ctx}/#quizPicker">Start a quiz</a>
+                        </c:otherwise>
+                    </c:choose>
+                </c:when>
+                <c:otherwise>
+                    <a class="btn btn-ghost btn-sm" href="${ctx}/login">Log in</a>
+                    <a class="btn btn-primary btn-sm" href="${ctx}/register">Sign up</a>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </div>
+</header>
+
+<div class="container flash-zone">
+    <c:if test="${not empty flashSuccess}">
+        <div class="alert alert-success" role="status">
+            <svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>
+            <c:out value="${flashSuccess}" />
+        </div>
+    </c:if>
+    <c:if test="${not empty flashError}">
+        <div class="alert alert-error" role="alert">
+            <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+            <c:out value="${flashError}" />
+        </div>
+    </c:if>
+</div>
+
+<main id="main" class="site-main">
