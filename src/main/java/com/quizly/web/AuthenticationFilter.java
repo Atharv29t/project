@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
  * login page with a safe return path.
  */
 @WebFilter(filterName = "AuthenticationFilter",
-        urlPatterns = {"/quiz", "/quiz/start", "/result", "/profile"})
+        urlPatterns = {"/quiz", "/quiz/start", "/result", "/profile", "/room", "/room/*"})
 public final class AuthenticationFilter implements Filter {
 
     @Override

@@ -16,10 +16,16 @@ built around the syllabus requirements:
 ## Features
 
 - Three quiz tracks: **Java Fundamentals**, **DSA Essentials**, **Web & JSP**.
-- Six shuffled multiple-choice questions per attempt, with option-order
-  randomisation on every restart.
+- Twelve questions in each track's bank (four per difficulty); each attempt
+  samples six questions (two per difficulty) and adapts toward harder or
+  easier questions based on each answer.
 - Answers are evaluated on completion and a full answer review is shown.
 - Percentage score, feedback card, pass indication and rank banner.
+- Daily streaks, persistent XP, 100-XP levels, and five unlockable badges.
+- Two once-per-quiz power-ups: 50/50 and double points. Each can be used once
+  per attempt; double points adds one point and 10 XP for a correct answer.
+- Voice mode reads questions and choices aloud and can select a spoken answer.
+- Live room-code games with 2–20 signed-in players and a WebSocket leaderboard.
 - Restart-safe leaderboard (top 10) by quiz and overall.
 - Basic CSRF protection, session handling, UTF-8 encoding and security headers.
 - Playful warm theme (cream · orange · sky · violet) with black pill badges,
@@ -29,7 +35,8 @@ built around the syllabus requirements:
   option hover/selection feedback and a result-page celebration (theme-coloured
   confetti plus a quiet, synthesised win chime via the Web Audio API — no audio
   files or extra dependencies). Everything respects `prefers-reduced-motion`.
-- Unit tests for the service, DSA leaderboard logic and CSV repository.
+- Unit tests for adaptive attempts, power-ups, progression, live-room rules,
+  repositories and Firestore-backed data access.
 
 ## Technology
 
@@ -37,8 +44,9 @@ built around the syllabus requirements:
 |---|---|
 | Language / runtime | Java 17 |
 | Web framework | Jakarta Servlet 6.0 (`@WebServlet`, `@WebFilter`, `@WebListener`) |
+| Live updates | Jakarta WebSocket 2.1 |
 | View | JSP 3.1 + JSTL 3.0 (`jakarta.tags.*`) |
-| Persistence | In-memory repository + CSV file (`CSV` with quote escaping) |
+| Persistence | Firebase Cloud Firestore (Firebase Admin SDK) |
 | Build/product | Maven WAR + Cargo Tomcat 10.1 profile |
 | Test | JUnit 5 |
 
@@ -46,6 +54,9 @@ built around the syllabus requirements:
 
 - JDK 17+
 - Maven 3.8+
+- A Firebase project with Cloud Firestore enabled
+- Google Application Default Credentials (a service account JSON key kept outside the repository)
+- A modern browser; microphone permission and Web Speech API support are needed for voice answers
 - No Tomcat installation is required if you use the included dev profile.
 
 > **WSL note:** from WSL, building directly from a mounted Windows path can
@@ -68,6 +79,22 @@ Maven downloads Tomcat 10.1.61 into `target/`, packages the web app as
 ```
 http://localhost:8081/quizly/
 ```
+
+Configure Firebase before starting the app. In PowerShell, set the project ID
+and path to your downloaded service-account key:
+
+```powershell
+$env:QUIZLY_FIREBASE_PROJECT_ID = "your-firebase-project-id"
+$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\secure\path\firebase-service-account.json"
+mvn -Pdev clean package cargo:run
+```
+
+Keep the service-account key private and outside the project folder. Never
+commit it or paste it into chat. Firestore must be enabled in the Firebase
+console. The app uses the server-side Firebase Admin SDK, which authenticates
+with Application Default Credentials.
+Voice recognition is browser-dependent (for example, Chrome and Edge support
+the Web Speech API); unsupported browsers still have the regular answer controls.
 
 You can change the port again by editing `cargo.servlet.port` in the `dev`
 profile of `pom.xml`.
@@ -99,34 +126,72 @@ mvn test
 | `/quiz/start` | POST | Start/restart an attempt for a selected quiz |
 | `/quiz` | GET | Show the current question |
 | `/quiz` | POST | Save the answer for the current question and advance |
+| `/room` | GET | Create a live room or join with a room code |
+| `/room/create` | POST | Create a room and become its host |
+| `/room/join` | POST | Join a waiting room with its six-character code |
+| `/room/start` | POST | Host starts a room quiz for all joined players |
+| `/ws/room/{code}/{token}` | WebSocket | Authenticated live room status and leaderboard updates |
 | `/result` | GET | Show percentage, feedback and answer review |
 | `/leaderboard` | GET | Top 10 results, optionally filtered with `?quiz=java` |
 
-## Where scores are stored
+## Move existing MongoDB data to Firestore
 
-The app stores a CSV summary at:
+The migration utility copies every non-system MongoDB collection into Firestore
+using each MongoDB document's `_id` as its Firestore document ID. It preserves
+the MongoDB source (read-only migration) and can be rerun safely. It also
+creates the email lookup documents used for sign-in.
 
+Set the Firestore credentials and the MongoDB source, then run:
+
+```powershell
+$env:QUIZLY_FIREBASE_PROJECT_ID = "your-firebase-project-id"
+$env:GOOGLE_APPLICATION_CREDENTIALS = "C:\secure\path\firebase-service-account.json"
+$env:QUIZLY_MONGO_URI = "mongodb://localhost:27017"
+$env:QUIZLY_MONGO_DATABASE = "quizly"
+mvn -DskipTests compile exec:java "-Dexec.mainClass=com.quizly.db.MongoToFirestoreMigrator"
 ```
-~/.quizly/results.csv
-```
 
-You can override this path when starting Tomcat:
+Use your existing MongoDB URI if the source is hosted elsewhere. Do not send
+the URI or service-account key in chat or commit either value. The migration
+prints a per-collection count; compare these counts and verify users, quiz
+history, and progression in Firestore before switching the app to Firestore.
+The source MongoDB data is not deleted or changed. Once verified, configure
+`QUIZLY_FIREBASE_PROJECT_ID` and `GOOGLE_APPLICATION_CREDENTIALS` when running
+Quizly; MongoDB environment variables are only needed by the migration tool.
 
-```
--Dquizly.data.file=/path/to/results.csv
-```
+## Progression, power-ups and live play
 
-Only the leaderboard summary is persisted. The full answer review is kept in
-the HTTP session for the current user and is deleted when a new attempt starts.
+- Each track has 12 rated questions: four easy, four medium, and four hard.
+  Every attempt samples two from each tier, starts with an easy question, then
+  targets a harder question after a correct answer or an easier one after a
+  miss. Questions and options are shuffled for replay variety.
+- Questions have a 30-second server-checked timer. Expired questions are
+  recorded as unanswered.
+- **50/50** leaves the correct choice and one distractor; **Double points**
+  adds one point and 10 XP when its question is answered correctly. Each power-up
+  can be used once per quiz attempt.
+- Completion grants 15 XP, 10 XP per correct answer, any double-points bonus,
+  and a streak bonus of 2 XP per streak day (capped at 14 XP). A streak advances
+  at most once per UTC day and resets after a missed day. Every 100 XP advances
+  a level. Badges unlock for a first quiz, 3/7-day streaks, and 100/500 XP.
+- The signed-in **Live rooms** page lets a host select a quiz and share its
+  six-character room code. At least two players must join before the host can
+  start; the room supports up to 20 players. Players must use the same running
+  Quizly server. Room state is in application memory, expires after three
+  hours, and is not shared across multiple app instances.
+- Voice mode uses browser speech synthesis and recognition. Spoken choices are
+  matched to the visible options; players can review the selected option before
+  submitting it. Browser microphone permission is required.
 
 ## Project structure
 
 ```
 src/main/java/com/quizly
 ├── data/          # immutable quiz catalogue
+├── db/            # Firestore connection and MongoDB migration utility
 ├── model/         # domain classes (JavaBean getters, JSP EL friendly)
-├── repository/    # result repository + CSV persistence
-├── service/       # quiz service and heap-based leaderboard service
+├── repository/    # Firestore-backed repositories
+├── service/       # quiz, progression, live-room and leaderboard services
 └── web/           # servlets, filter, listener and application constants
 
 src/main/webapp
@@ -135,7 +200,7 @@ src/main/webapp
 │   └── web.xml    # welcome-file, error pages, session/JSP settings
 └── assets/        # CSS / JS / favicon
 
-src/test/java/com/quizly  # JUnit tests
+src/test/java/com/quizly  # JUnit tests, using an in-memory document store
 ```
 
 ## Concepts map
@@ -157,10 +222,11 @@ src/test/java/com/quizly  # JUnit tests
 1. Open the home page and explain the three tracks.
 2. Enter a name and choose a quiz. Point out that POST keeps state out of the URL.
 3. Play one attempt and show the progress bar and option-shuffling note.
-4. Show the result page and open some answer explanations.
-5. Open the leaderboard, switch quiz filters, and show that the new score appears.
-6. Show the console test report (`mvn test`) and explain the heap tie-break logic.
-7. Restart Tomcat, refresh the leaderboard, and show that data is still there.
+4. Try an adaptive question, a power-up, and the voice buttons.
+5. Show the XP, streak, levels and badges on the account page.
+6. Create a live room, join it from another signed-in browser, and start the game.
+7. Show the result review and the room leaderboard updating live.
+8. Show the console test report (`mvn test`) and the existing leaderboard.
 
 ## Adding a new quiz
 

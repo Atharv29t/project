@@ -36,6 +36,7 @@
             <a href="${ctx}/leaderboard" class="${activeNav eq 'leaderboard' ? 'is-active' : ''}">Leaderboard</a>
             <c:if test="${not empty sessionScope.currentUser}">
                 <a href="${ctx}/profile" class="${activeNav eq 'profile' ? 'is-active' : ''}">My scores</a>
+                <a href="${ctx}/room" class="${activeNav eq 'room' ? 'is-active' : ''}">Live rooms</a>
             </c:if>
         </nav>
 

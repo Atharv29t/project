@@ -46,6 +46,31 @@
         </div>
     </div>
 
+    <section class="progression-card" aria-labelledby="progressionTitle">
+        <div class="progression-heading">
+            <div>
+                <span class="kicker">Your learning streak</span>
+                <h2 id="progressionTitle">Level ${progression.level} · ${progression.xp} XP</h2>
+            </div>
+            <span class="streak-chip">${progression.currentStreak} day streak</span>
+        </div>
+        <div class="xp-track" role="progressbar" aria-valuenow="${progression.xpIntoLevel}" aria-valuemin="0" aria-valuemax="100">
+            <span style="width:${progression.xpIntoLevel}%"></span>
+        </div>
+        <p>${progression.xpToNextLevel} XP to level ${progression.level + 1}</p>
+        <h3>Badges</h3>
+        <div class="badge-list">
+            <c:choose>
+                <c:when test="${empty progression.badges}"><span class="badge locked">Complete a quiz to earn your first badge</span></c:when>
+                <c:otherwise>
+                    <c:forEach var="badge" items="${progression.badges}">
+                        <span class="badge">${fn:replace(badge, '-', ' ')}</span>
+                    </c:forEach>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </section>
+
     <div class="history-head">
         <div>
             <span class="kicker">Score history</span>

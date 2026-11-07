@@ -54,6 +54,24 @@ public final class ResultServlet extends HttpServlet {
         request.setAttribute(App.ACTIVE_NAV, "result");
         request.setAttribute("result", result);
         request.setAttribute("leaderboardRank", rank);
+        Object lastRoomCode = session == null ? null : session.getAttribute(App.LAST_ROOM_CODE);
+        if (lastRoomCode instanceof String code && user != null) {
+            try {
+                var room = WebSupport.<com.quizly.service.RoomService>service(request, App.ROOM_SERVICE)
+                        .find(code, user.getId());
+                request.setAttribute("liveRoomCode", room.getCode());
+            } catch (IllegalArgumentException | IllegalStateException exception) {
+                session.removeAttribute(App.LAST_ROOM_CODE);
+            }
+        }
+        if (session != null) {
+            Object xpAward = session.getAttribute(App.LAST_XP_AWARD);
+            Object lastResultId = session.getAttribute(App.LAST_RESULT_ID);
+            if (xpAward instanceof Integer && result.getId().equals(lastResultId)) {
+                request.setAttribute("xpAward", xpAward);
+                session.removeAttribute(App.LAST_XP_AWARD);
+            }
+        }
         WebSupport.forward(request, response, "result");
     }
 }

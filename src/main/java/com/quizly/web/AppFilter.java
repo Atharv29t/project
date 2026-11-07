@@ -35,7 +35,7 @@ public final class AppFilter implements Filter {
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("X-Frame-Options", "DENY");
         response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-        response.setHeader("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
+        response.setHeader("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self'; connect-src 'self' ws: wss:; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
 
         String path = request.getRequestURI().substring(request.getContextPath().length());
         boolean isStaticAsset = path.startsWith("/assets/") || path.startsWith("/favicon");

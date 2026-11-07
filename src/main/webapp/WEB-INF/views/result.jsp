@@ -23,6 +23,9 @@
             <span class="kicker"><c:out value="${result.quizTitle}" /></span>
             <h1>${result.feedbackTitle}</h1>
             <p>${result.feedbackMessage}</p>
+            <c:if test="${not empty xpAward}">
+                <div class="rank-banner">+${xpAward} XP earned · Keep your streak alive!</div>
+            </c:if>
 
             <ul class="result-meta">
                 <li>
@@ -55,6 +58,9 @@
                     </button>
                 </form>
                 <a class="btn btn-ghost" href="${ctx}/leaderboard?quiz=${fn:escapeXml(result.quizId)}">See board</a>
+                <c:if test="${not empty liveRoomCode}">
+                    <a class="btn btn-ghost" href="${ctx}/room?code=${fn:escapeXml(liveRoomCode)}">View live room</a>
+                </c:if>
                 <a class="text-link" href="${ctx}/#quizPicker">Choose another track</a>
             </div>
         </div>
@@ -65,6 +71,11 @@
             <span class="breakdown-icon" aria-hidden="true"><svg class="icon"><use href="#i-check"/></svg></span>
             <span class="value">${result.score}</span>
             <span class="label">Correct</span>
+        </div>
+        <div class="breakdown-card breakdown-pass">
+            <span class="breakdown-icon" aria-hidden="true"><svg class="icon"><use href="#i-spark"/></svg></span>
+            <span class="value">${result.points}</span>
+            <span class="label">Points (+${result.bonusPoints} power-up bonus)</span>
         </div>
         <div class="breakdown-card breakdown-wrong">
             <span class="breakdown-icon" aria-hidden="true"><svg class="icon"><use href="#i-x"/></svg></span>

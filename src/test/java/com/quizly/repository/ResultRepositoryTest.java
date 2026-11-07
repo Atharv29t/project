@@ -1,6 +1,6 @@
 package com.quizly.repository;
 
-import com.quizly.db.Database;
+import com.quizly.TestDatabase;
 import com.quizly.model.AnswerReview;
 import com.quizly.model.Result;
 import com.quizly.model.User;
@@ -19,7 +19,7 @@ class ResultRepositoryTest {
     @Test
     void savesLoadsAndSurvivesARepositoryRestart() {
         String name = "result-" + UUID.randomUUID();
-        Database database = Database.inMemory(name);
+        var database = TestDatabase.create(name);
         database.initialize();
         Instant completedAt = Instant.parse("2026-03-01T10:15:30Z");
         Result result = result("r-1", "Ada, Lovelace", "java", 6, 6, 100, completedAt);
@@ -28,7 +28,7 @@ class ResultRepositoryTest {
         repository.save(result);
         assertEquals(1, repository.count());
 
-        Database reopened = Database.inMemory(name);
+        var reopened = TestDatabase.create(name);
         ResultRepository reloaded = new ResultRepository(reopened);
         assertEquals(1, reloaded.count());
         Result loaded = reloaded.findById("r-1").orElseThrow();
@@ -42,7 +42,7 @@ class ResultRepositoryTest {
 
     @Test
     void findsResultsByUserAndQuiz() {
-        Database database = Database.inMemory("result-" + UUID.randomUUID());
+        var database = TestDatabase.create("result-" + UUID.randomUUID());
         database.initialize();
         UserRepository users = new UserRepository(database);
         User user = new User("u-1", "Ada", "ada@example.com", "hash", Instant.now(), Instant.now());
@@ -58,8 +58,25 @@ class ResultRepositoryTest {
     }
 
     @Test
+    void persistsTheBonusPointAwardedByDoublePoints() {
+        var database = TestDatabase.create("result-" + UUID.randomUUID());
+        database.initialize();
+        Result result = new Result("bonus", null, "Ada", "java", "Java Fundamentals",
+                "☕", "#6C5CE7", 1, 1, 2, 50, Instant.now(),
+                List.of(new AnswerReview(1, "Prompt", "Correct", "Correct", "Explanation")));
+
+        ResultRepository repository = new ResultRepository(database);
+        repository.save(result);
+
+        Result loaded = repository.findById("bonus").orElseThrow();
+        assertEquals(1, loaded.getBonusPoints());
+        assertEquals(2, loaded.getPoints());
+        assertEquals(50, loaded.getPercentage());
+    }
+
+    @Test
     void rejectsSavingAReviewlessResult() {
-        Database database = Database.inMemory("result-" + UUID.randomUUID());
+        var database = TestDatabase.create("result-" + UUID.randomUUID());
         database.initialize();
         Result result = new Result(
                 "r-empty",

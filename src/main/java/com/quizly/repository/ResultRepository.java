@@ -1,193 +1,132 @@
 package com.quizly.repository;
 
 import com.quizly.db.Database;
+import com.quizly.db.DocumentStore;
 import com.quizly.model.AnswerReview;
 import com.quizly.model.Result;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * JDBC-backed result repository. Completed attempts and their answer reviews
- * survive application restarts.
+ * Firestore-backed completed attempts and their answer reviews.
  */
 public final class ResultRepository {
 
-    private final Database database;
+    private static final String RESULTS = "results";
+    private final DocumentStore store;
 
     public ResultRepository(Database database) {
-        this.database = database;
+        this.store = database.store();
     }
 
     public void save(Result result) {
         if (result.getReviews().isEmpty()) {
             throw new IllegalArgumentException("A stored result must contain reviews for validation");
         }
-
-        try (Connection connection = database.openConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                insertResult(connection, result);
-                insertReviews(connection, result);
-                connection.commit();
-            } catch (SQLException exception) {
-                connection.rollback();
-                throw exception;
-            } finally {
-                connection.setAutoCommit(true);
-            }
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not save the quiz result", exception);
-        }
+        List<Map<String, Object>> reviews = result.getReviews().stream().map(review -> {
+            Map<String, Object> document = new HashMap<>();
+            document.put("number", review.getNumber());
+            document.put("prompt", review.getPrompt());
+            document.put("selectedAnswer", review.getSelectedAnswer());
+            document.put("correctAnswer", review.getCorrectAnswer());
+            document.put("explanation", review.getExplanation());
+            return document;
+        }).toList();
+        Map<String, Object> document = new HashMap<>();
+        document.put("userId", result.getUserId());
+        document.put("playerName", result.getPlayerName());
+        document.put("quizId", result.getQuizId());
+        document.put("quizTitle", result.getQuizTitle());
+        document.put("quizIcon", result.getQuizIcon());
+        document.put("accentColor", result.getAccentColor());
+        document.put("score", result.getScore());
+        document.put("bonusPoints", result.getBonusPoints());
+        document.put("total", result.getTotal());
+        document.put("percentage", result.getPercentage());
+        document.put("completedAt", Date.from(result.getCompletedAt()));
+        document.put("reviews", reviews);
+        store.create(RESULTS, result.getId(), document);
     }
 
     public List<Result> findAll() {
-        return queryResults("SELECT * FROM results ORDER BY completed_at DESC", null);
+        return queryResults(null, null);
     }
 
     public List<Result> findByQuiz(String quizId) {
-        return queryResults("SELECT * FROM results WHERE quiz_id = ? ORDER BY completed_at DESC", quizId);
+        return queryResults("quizId", quizId);
     }
 
     public List<Result> findByUser(String userId) {
-        return queryResults("SELECT * FROM results WHERE user_id = ? ORDER BY completed_at DESC", userId);
+        return queryResults("userId", userId);
     }
 
     public Optional<Result> findById(String id) {
-        String sql = "SELECT * FROM results WHERE id = ?";
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, id);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (!resultSet.next()) {
-                    return Optional.empty();
-                }
-                Result result = mapResult(resultSet, loadReviews(connection, id));
-                return Optional.of(result);
-            }
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not read the quiz result", exception);
-        }
+        Map<String, Object> document = store.find(RESULTS, id);
+        return document == null ? Optional.empty() : Optional.of(mapResult(document));
     }
 
     public long count() {
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM results");
-             ResultSet resultSet = statement.executeQuery()) {
-            resultSet.next();
-            return resultSet.getLong(1);
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not count results", exception);
-        }
+        return store.findAll(RESULTS).size();
     }
 
-    private List<Result> queryResults(String sql, String parameter) {
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            if (parameter != null) {
-                statement.setString(1, parameter);
-            }
-            try (ResultSet resultSet = statement.executeQuery()) {
-                List<Result> results = new ArrayList<>();
-                while (resultSet.next()) {
-                    results.add(mapResult(resultSet, List.of()));
-                }
-                return List.copyOf(results);
-            }
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not read quiz results", exception);
-        }
+    private List<Result> queryResults(String field, String value) {
+        return store.findAll(RESULTS).stream()
+                .filter(document -> field == null || value.equals(document.get(field)))
+                .map(this::mapResult)
+                .sorted((left, right) -> right.getCompletedAt().compareTo(left.getCompletedAt()))
+                .toList();
     }
 
-    private void insertResult(Connection connection, Result result) throws SQLException {
-        String sql = """
-                INSERT INTO results
-                    (id, user_id, player_name, quiz_id, quiz_title, quiz_icon, accent_color,
-                     score, total, percentage, completed_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, result.getId());
-            statement.setString(2, result.getUserId());
-            statement.setString(3, result.getPlayerName());
-            statement.setString(4, result.getQuizId());
-            statement.setString(5, result.getQuizTitle());
-            statement.setString(6, result.getQuizIcon());
-            statement.setString(7, result.getAccentColor());
-            statement.setInt(8, result.getScore());
-            statement.setInt(9, result.getTotal());
-            statement.setInt(10, result.getPercentage());
-            statement.setObject(11, OffsetDateTime.ofInstant(result.getCompletedAt(), ZoneOffset.UTC));
-            statement.executeUpdate();
+    private Result mapResult(Map<String, Object> document) {
+        List<?> storedReviews = (List<?>) document.get("reviews");
+        List<AnswerReview> reviews = new ArrayList<>();
+        for (Object value : storedReviews) {
+            Map<?, ?> review = (Map<?, ?>) value;
+            reviews.add(new AnswerReview(
+                    number(review.get("number"), 0),
+                    (String) review.get("prompt"),
+                    (String) review.get("selectedAnswer"),
+                    (String) review.get("correctAnswer"),
+                    (String) review.get("explanation")
+            ));
         }
-    }
-
-    private void insertReviews(Connection connection, Result result) throws SQLException {
-        String sql = """
-                INSERT INTO result_answers
-                    (result_id, question_number, prompt, selected_answer, correct_answer, explanation)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            for (AnswerReview review : result.getReviews()) {
-                statement.setString(1, result.getId());
-                statement.setInt(2, review.getNumber());
-                statement.setString(3, review.getPrompt());
-                statement.setString(4, review.getSelectedAnswer());
-                statement.setString(5, review.getCorrectAnswer());
-                statement.setString(6, review.getExplanation());
-                statement.addBatch();
-            }
-            statement.executeBatch();
-        }
-    }
-
-    private List<AnswerReview> loadReviews(Connection connection, String resultId) throws SQLException {
-        String sql = """
-                SELECT question_number, prompt, selected_answer, correct_answer, explanation
-                FROM result_answers
-                WHERE result_id = ?
-                ORDER BY question_number
-                """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, resultId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                List<AnswerReview> reviews = new ArrayList<>();
-                while (resultSet.next()) {
-                    reviews.add(new AnswerReview(
-                            resultSet.getInt("question_number"),
-                            resultSet.getString("prompt"),
-                            resultSet.getString("selected_answer"),
-                            resultSet.getString("correct_answer"),
-                            resultSet.getString("explanation")
-                    ));
-                }
-                return List.copyOf(reviews);
-            }
-        }
-    }
-
-    private Result mapResult(ResultSet resultSet, List<AnswerReview> reviews) throws SQLException {
         return new Result(
-                resultSet.getString("id"),
-                resultSet.getString("user_id"),
-                resultSet.getString("player_name"),
-                resultSet.getString("quiz_id"),
-                resultSet.getString("quiz_title"),
-                resultSet.getString("quiz_icon"),
-                resultSet.getString("accent_color"),
-                resultSet.getInt("score"),
-                resultSet.getInt("total"),
-                resultSet.getInt("percentage"),
-                resultSet.getObject("completed_at", OffsetDateTime.class).toInstant(),
+                (String) document.get("_id"),
+                (String) document.get("userId"),
+                (String) document.get("playerName"),
+                (String) document.get("quizId"),
+                (String) document.get("quizTitle"),
+                (String) document.get("quizIcon"),
+                (String) document.get("accentColor"),
+                number(document.get("score"), 0),
+                number(document.get("bonusPoints"), 0),
+                number(document.get("total"), 0),
+                number(document.get("percentage"), 0),
+                instant(document.get("completedAt")),
                 reviews
         );
+    }
+
+    private int number(Object value, int fallback) {
+        return value instanceof Number number ? number.intValue() : fallback;
+    }
+
+    private Instant instant(Object value) {
+        if (value instanceof Date date) {
+            return date.toInstant();
+        }
+        if (value instanceof com.google.cloud.Timestamp timestamp) {
+            return Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos());
+        }
+        if (value instanceof Instant instant) {
+            return instant;
+        }
+        throw new IllegalStateException("Unexpected Firestore timestamp value");
     }
 }

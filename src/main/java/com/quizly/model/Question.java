@@ -14,19 +14,29 @@ public final class Question {
     private final List<String> options;
     private final int correctOptionIndex;
     private final String explanation;
+    private final int difficulty;
 
     public Question(String id, String prompt, List<String> options, int correctOptionIndex, String explanation) {
+        this(id, prompt, options, correctOptionIndex, explanation, 2);
+    }
+
+    public Question(String id, String prompt, List<String> options, int correctOptionIndex,
+                    String explanation, int difficulty) {
         this.id = Objects.requireNonNull(id, "id");
         this.prompt = Objects.requireNonNull(prompt, "prompt");
         this.options = List.copyOf(Objects.requireNonNull(options, "options"));
         this.correctOptionIndex = correctOptionIndex;
         this.explanation = Objects.requireNonNull(explanation, "explanation");
+        this.difficulty = difficulty;
 
         if (options.size() < 2) {
             throw new IllegalArgumentException("A question needs at least two options");
         }
         if (correctOptionIndex < 0 || correctOptionIndex >= options.size()) {
             throw new IllegalArgumentException("correctOptionIndex is out of range");
+        }
+        if (difficulty < 1 || difficulty > 3) {
+            throw new IllegalArgumentException("difficulty must be between 1 and 3");
         }
     }
 
@@ -52,5 +62,9 @@ public final class Question {
 
     public String getExplanation() {
         return explanation;
+    }
+
+    public int getDifficulty() {
+        return difficulty;
     }
 }

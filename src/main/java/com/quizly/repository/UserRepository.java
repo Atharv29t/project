@@ -1,99 +1,107 @@
 package com.quizly.repository;
 
 import com.quizly.db.Database;
+import com.quizly.db.DocumentStore;
 import com.quizly.model.User;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
-import java.time.OffsetDateTime;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
- * JDBC-backed user accounts.
+ * Firestore-backed player accounts.
  */
 public final class UserRepository {
 
-    private final Database database;
+    private static final String USERS = "users";
+    private static final String EMAIL_LOOKUPS = "userEmailLookups";
+    private final DocumentStore store;
 
     public UserRepository(Database database) {
-        this.database = database;
+        this.store = database.store();
     }
 
     public void create(User user) {
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement("""
-                     INSERT INTO users (id, name, email, password_hash, created_at, last_login_at)
-                     VALUES (?, ?, ?, ?, ?, ?)
-                     """)) {
-            statement.setString(1, user.getId());
-            statement.setString(2, user.getName());
-            statement.setString(3, user.getEmail());
-            statement.setString(4, user.getPasswordHash());
-            statement.setObject(5, OffsetDateTime.ofInstant(user.getCreatedAt(), java.time.ZoneOffset.UTC));
-            statement.setObject(6, user.getLastLoginAt() == null
-                    ? null
-                    : OffsetDateTime.ofInstant(user.getLastLoginAt(), java.time.ZoneOffset.UTC));
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not create the user account", exception);
-        }
+        String emailKey = emailKey(user.getEmail());
+        Map<String, Object> document = new HashMap<>();
+        document.put("name", user.getName());
+        document.put("email", user.getEmail());
+        document.put("passwordHash", user.getPasswordHash());
+        document.put("createdAt", Date.from(user.getCreatedAt()));
+        document.put("lastLoginAt", user.getLastLoginAt() == null ? null : Date.from(user.getLastLoginAt()));
+        store.transact(transaction -> {
+            if (transaction.find(EMAIL_LOOKUPS, emailKey) != null) {
+                throw new IllegalStateException("A user account with that ID or email already exists");
+            }
+            if (transaction.find(USERS, user.getId()) != null) {
+                throw new IllegalStateException("A user account with that ID or email already exists");
+            }
+            transaction.create(USERS, user.getId(), document);
+            transaction.create(EMAIL_LOOKUPS, emailKey, Map.of("userId", user.getId()));
+            return null;
+        });
     }
 
     public Optional<User> findByEmail(String email) {
-        return queryOne("SELECT * FROM users WHERE email = ?", email);
+        String key = emailKey(email);
+        Map<String, Object> lookup = store.find(EMAIL_LOOKUPS, key);
+        if (lookup != null && lookup.get("userId") instanceof String userId) {
+            return findById(userId);
+        }
+        return store.findAll(USERS).stream()
+                .filter(document -> email.equalsIgnoreCase((String) document.get("email")))
+                .findFirst().map(this::map);
     }
 
     public Optional<User> findById(String id) {
-        return queryOne("SELECT * FROM users WHERE id = ?", id);
+        Map<String, Object> document = store.find(USERS, id);
+        return document == null ? Optional.empty() : Optional.of(map(document));
     }
 
     public void recordLogin(String userId, Instant loginAt) {
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement(
-                     "UPDATE users SET last_login_at = ? WHERE id = ?")) {
-            statement.setObject(1, OffsetDateTime.ofInstant(loginAt, java.time.ZoneOffset.UTC));
-            statement.setString(2, userId);
-            statement.executeUpdate();
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not update the user account", exception);
-        }
+        store.update(USERS, userId, Map.of("lastLoginAt", Date.from(loginAt)));
     }
 
     public long count() {
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM users");
-             ResultSet resultSet = statement.executeQuery()) {
-            resultSet.next();
-            return resultSet.getLong(1);
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not count users", exception);
-        }
+        return store.findAll(USERS).size();
     }
 
-    private Optional<User> queryOne(String sql, String parameter) {
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, parameter);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next() ? Optional.of(map(resultSet)) : Optional.empty();
-            }
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not read the user account", exception);
-        }
-    }
-
-    private User map(ResultSet resultSet) throws SQLException {
-        OffsetDateTime lastLogin = resultSet.getObject("last_login_at", OffsetDateTime.class);
+    private User map(Map<String, Object> document) {
         return new User(
-                resultSet.getString("id"),
-                resultSet.getString("name"),
-                resultSet.getString("email"),
-                resultSet.getString("password_hash"),
-                resultSet.getObject("created_at", OffsetDateTime.class).toInstant(),
-                lastLogin == null ? null : lastLogin.toInstant()
+                (String) document.get("_id"),
+                (String) document.get("name"),
+                (String) document.get("email"),
+                (String) document.get("passwordHash"),
+                instant(document.get("createdAt")),
+                document.get("lastLoginAt") == null ? null : instant(document.get("lastLoginAt"))
         );
+    }
+
+    private Instant instant(Object value) {
+        if (value instanceof Date date) {
+            return date.toInstant();
+        }
+        if (value instanceof com.google.cloud.Timestamp timestamp) {
+            return Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos());
+        }
+        if (value instanceof Instant instant) {
+            return instant;
+        }
+        throw new IllegalStateException("Unexpected Firestore timestamp value");
+    }
+
+    private String emailKey(String email) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(email.toLowerCase(java.util.Locale.ROOT).getBytes(StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
     }
 }

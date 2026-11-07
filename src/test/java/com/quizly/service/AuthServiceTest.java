@@ -1,6 +1,6 @@
 package com.quizly.service;
 
-import com.quizly.db.Database;
+import com.quizly.TestDatabase;
 import com.quizly.model.User;
 import com.quizly.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +20,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        Database database = Database.inMemory("auth-" + UUID.randomUUID());
+        var database = TestDatabase.create("auth-" + UUID.randomUUID());
         database.initialize();
         users = new UserRepository(database);
         authService = new AuthService(users);

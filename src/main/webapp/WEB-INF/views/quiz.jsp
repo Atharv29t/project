@@ -24,9 +24,22 @@
         <article class="question-card">
             <div class="question-head">
                 <span class="q-number">Question ${attempt.currentNumber}</span>
-                <span class="q-type">Multiple choice</span>
+                <span class="q-type">Adaptive · <c:choose><c:when test="${question.difficulty eq 1}">Easy</c:when><c:when test="${question.difficulty eq 3}">Hard</c:when><c:otherwise>Medium</c:otherwise></c:choose></span>
             </div>
             <h1><c:out value="${question.prompt}" /></h1>
+            <div class="quiz-tools">
+                <span class="question-timer" data-seconds="${attempt.remainingSeconds}" aria-live="polite">
+                    <span>Time left</span>:
+                    <strong id="timerSeconds">${attempt.remainingSeconds}</strong>s
+                </span>
+                <button class="btn btn-ghost btn-sm" type="button" data-voice-read>
+                    Read question aloud
+                </button>
+                <button class="btn btn-ghost btn-sm" type="button" data-voice-answer>
+                    Answer by voice
+                </button>
+                <span class="voice-status" aria-live="polite"></span>
+            </div>
 
             <form class="answer-form" method="post" action="${ctx}/quiz">
                 <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
@@ -35,7 +48,7 @@
                 <fieldset>
                     <legend class="sr-only">Choose one answer</legend>
                     <div class="option-list" role="list">
-                        <c:forEach var="option" items="${question.options}" varStatus="status">
+                        <c:forEach var="option" items="${attempt.currentOptions}" varStatus="status">
                             <label class="option" role="listitem">
                                 <input type="radio" name="answer" required value="${fn:escapeXml(option)}">
                                 <span class="option-letter" aria-hidden="true">${fn:substring('ABCDEF', status.count - 1, status.count)}</span>
@@ -53,7 +66,14 @@
                         ${attempt.lastQuestion ? 'Finish quiz' : 'Next question'}
                         <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg>
                     </button>
-                    <button class="skip-btn" type="submit" name="skip" value="1" formnovalidate>Skip this one</button>
+                    <button class="sr-only" type="submit" name="timeout" value="1" formnovalidate data-timeout-submit>Time expired</button>
+                </div>
+                <div class="power-up-bar" aria-label="Power-ups, each usable once per quiz">
+                    <strong>Power-ups · one use each</strong>
+                    <button class="power-up" type="submit" name="powerUp" value="fiftyFifty" formnovalidate
+                            ${not attempt.isPowerUpAvailable('fiftyFifty') ? 'disabled' : ''}>50/50</button>
+                    <button class="power-up" type="submit" name="powerUp" value="doublePoints" formnovalidate
+                            ${not attempt.isPowerUpAvailable('doublePoints') ? 'disabled' : ''}>Double points</button>
                 </div>
             </form>
         </article>
@@ -79,8 +99,8 @@
                         <span class="fact-label">questions</span>
                     </li>
                     <li>
-                        <span class="fact-value">1</span>
-                        <span class="fact-label">mark each</span>
+                        <span class="fact-value">30s</span>
+                        <span class="fact-label">per question</span>
                     </li>
                     <li>
                         <span class="fact-value">${attempt.progressPercent}%</span>
@@ -94,7 +114,7 @@
                     <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
                     Can I change an answer?
                 </summary>
-                <p>No. Each answer advances the attempt. If you skip, the question is marked as not answered in the final review.</p>
+                <p>Your next question adapts to your answer: correct answers raise the difficulty, and misses lower it. Use 50/50 to remove two wrong choices, or activate Double points before answering to earn a bonus point and XP for a correct answer. Each power-up can be used once per quiz.</p>
             </details>
         </aside>
     </div>

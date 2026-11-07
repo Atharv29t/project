@@ -28,6 +28,7 @@ public final class Result {
     private final String quizIcon;
     private final String accentColor;
     private final int score;
+    private final int bonusPoints;
     private final int total;
     private final int percentage;
     private final Instant completedAt;
@@ -43,6 +44,13 @@ public final class Result {
     public Result(String id, String userId, String playerName, String quizId, String quizTitle, String quizIcon,
                   String accentColor, int score, int total, int percentage,
                   Instant completedAt, List<AnswerReview> reviews) {
+        this(id, userId, playerName, quizId, quizTitle, quizIcon, accentColor,
+                score, 0, total, percentage, completedAt, reviews);
+    }
+
+    public Result(String id, String userId, String playerName, String quizId, String quizTitle, String quizIcon,
+                  String accentColor, int score, int bonusPoints, int total, int percentage,
+                  Instant completedAt, List<AnswerReview> reviews) {
         this.id = Objects.requireNonNull(id, "id");
         this.userId = userId;
         this.playerName = Objects.requireNonNull(playerName, "playerName");
@@ -51,6 +59,7 @@ public final class Result {
         this.quizIcon = Objects.requireNonNull(quizIcon, "quizIcon");
         this.accentColor = Objects.requireNonNull(accentColor, "accentColor");
         this.score = score;
+        this.bonusPoints = bonusPoints;
         this.total = total;
         this.percentage = percentage;
         this.completedAt = Objects.requireNonNull(completedAt, "completedAt");
@@ -87,6 +96,14 @@ public final class Result {
 
     public int getScore() {
         return score;
+    }
+
+    public int getBonusPoints() {
+        return bonusPoints;
+    }
+
+    public int getPoints() {
+        return score + bonusPoints;
     }
 
     public int getTotal() {

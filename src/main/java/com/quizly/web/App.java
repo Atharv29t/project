@@ -13,10 +13,15 @@ public final class App {
     public static final String LEADERBOARD_SERVICE = "leaderboardService";
     public static final String AUTH_SERVICE = "authService";
     public static final String RESULT_REPOSITORY = "resultRepository";
+    public static final String PROGRESSION_REPOSITORY = "progressionRepository";
+    public static final String ROOM_SERVICE = "roomService";
 
     public static final String ATTEMPT = "attempt";
     public static final String LAST_RESULT = "lastResult";
     public static final String LAST_RESULT_ID = "lastResultId";
+    public static final String LAST_XP_AWARD = "lastXpAward";
+    public static final String ROOM_CODE = "roomCode";
+    public static final String LAST_ROOM_CODE = "lastRoomCode";
     public static final String PLAYER_NAME = "playerName";
     public static final String CURRENT_USER = "currentUser";
     public static final String CSRF_TOKEN = "csrfToken";

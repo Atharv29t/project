@@ -1,143 +1,82 @@
 package com.quizly.repository;
 
+import com.quizly.data.QuizCatalog;
 import com.quizly.db.Database;
+import com.quizly.db.DocumentStore;
 import com.quizly.model.Question;
 import com.quizly.model.Quiz;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * Reads the quiz catalogue, questions and options from the database.
+ * Reads the quiz catalogue, questions and options from Firestore.
  */
 public final class QuizRepository {
 
-    private final Database database;
+    private final DocumentStore store;
 
     public QuizRepository(Database database) {
-        this.database = database;
+        this.store = database.store();
     }
 
     public List<Quiz> findAll() {
-        String sql = """
-                SELECT id, title, tagline, description, icon, difficulty,
-                       estimated_minutes, accent_color
-                FROM quizzes
-                ORDER BY sort_order, title
-                """;
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
-            List<Quiz> quizzes = new ArrayList<>();
-            while (resultSet.next()) {
-                quizzes.add(mapQuiz(connection, resultSet));
-            }
-            return List.copyOf(quizzes);
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not read the quiz catalogue", exception);
-        }
+        return store.findAll("quizzes").stream()
+                .sorted(Comparator.comparingInt((Map<String, Object> document) -> number(document.get("sortOrder"), 0))
+                        .thenComparing(document -> (String) document.getOrDefault("title", "")))
+                .map(this::mapQuiz)
+                .toList();
     }
 
     public Optional<Quiz> findById(String quizId) {
         if (quizId == null || quizId.isBlank()) {
             return Optional.empty();
         }
-        String sql = """
-                SELECT id, title, tagline, description, icon, difficulty,
-                       estimated_minutes, accent_color
-                FROM quizzes
-                WHERE id = ?
-                """;
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, quizId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next() ? Optional.of(mapQuiz(connection, resultSet)) : Optional.empty();
-            }
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not read the quiz", exception);
-        }
+        Map<String, Object> document = store.find("quizzes", quizId);
+        return document == null ? Optional.empty() : Optional.of(mapQuiz(document));
     }
 
     public int totalQuestions() {
-        try (Connection connection = database.openConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM questions");
-             ResultSet resultSet = statement.executeQuery()) {
-            resultSet.next();
-            return resultSet.getInt(1);
-        } catch (SQLException exception) {
-            throw new IllegalStateException("Could not count questions", exception);
-        }
+        return findAll().stream().mapToInt(quiz -> quiz.getQuestions().size()).sum();
     }
 
-    private Quiz mapQuiz(Connection connection, ResultSet resultSet) throws SQLException {
-        String quizId = resultSet.getString("id");
+    private Quiz mapQuiz(Map<String, Object> document) {
+        String quizId = (String) document.get("_id");
+        List<?> questionDocuments = (List<?>) document.get("questions");
+        List<Question> questions = new ArrayList<>();
+        for (int index = 0; index < questionDocuments.size(); index++) {
+            Map<?, ?> question = (Map<?, ?>) questionDocuments.get(index);
+            questions.add(new Question(
+                    (String) question.get("id"),
+                    (String) question.get("prompt"),
+                    strings(question.get("options")),
+                    number(question.get("correctOptionIndex"), 0),
+                    (String) question.get("explanation"),
+                    number(question.get("difficulty"),
+                            QuizCatalog.difficultyForQuestion(quizId, (String) question.get("id"), index))
+            ));
+        }
         return new Quiz(
                 quizId,
-                resultSet.getString("title"),
-                resultSet.getString("tagline"),
-                resultSet.getString("description"),
-                resultSet.getString("icon"),
-                resultSet.getString("difficulty"),
-                resultSet.getInt("estimated_minutes"),
-                resultSet.getString("accent_color"),
-                loadQuestions(connection, quizId)
+                (String) document.get("title"),
+                (String) document.get("tagline"),
+                (String) document.get("description"),
+                (String) document.get("icon"),
+                (String) document.get("difficulty"),
+                number(document.get("estimatedMinutes"), 0),
+                (String) document.get("accentColor"),
+                questions
         );
     }
 
-    private List<Question> loadQuestions(Connection connection, String quizId) throws SQLException {
-        String sql = """
-                SELECT id, prompt, explanation
-                FROM questions
-                WHERE quiz_id = ?
-                ORDER BY sort_order
-                """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, quizId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                List<Question> questions = new ArrayList<>();
-                while (resultSet.next()) {
-                    questions.add(loadQuestion(connection, resultSet));
-                }
-                return List.copyOf(questions);
-            }
-        }
+    private List<String> strings(Object value) {
+        return ((List<?>) value).stream().map(String.class::cast).toList();
     }
 
-    private Question loadQuestion(Connection connection, ResultSet resultSet) throws SQLException {
-        String questionId = resultSet.getString("id");
-        List<String> options = new ArrayList<>();
-        int correctIndex = 0;
-
-        String sql = """
-                SELECT option_text, is_correct
-                FROM question_options
-                WHERE question_id = ?
-                ORDER BY sort_order
-                """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, questionId);
-            try (ResultSet optionsResult = statement.executeQuery()) {
-                while (optionsResult.next()) {
-                    if (optionsResult.getBoolean("is_correct")) {
-                        correctIndex = options.size();
-                    }
-                    options.add(optionsResult.getString("option_text"));
-                }
-            }
-        }
-
-        return new Question(
-                questionId,
-                resultSet.getString("prompt"),
-                options,
-                correctIndex,
-                resultSet.getString("explanation")
-        );
+    private int number(Object value, int fallback) {
+        return value instanceof Number number ? number.intValue() : fallback;
     }
 }

@@ -3,6 +3,8 @@ package com.quizly.web;
 import com.quizly.model.Attempt;
 import com.quizly.model.Result;
 import com.quizly.repository.ResultRepository;
+import com.quizly.repository.ProgressionRepository;
+import com.quizly.service.RoomService;
 import com.quizly.service.QuizService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -61,11 +63,27 @@ public final class QuizServlet extends HttpServlet {
             return;
         }
 
-        boolean skipped = request.getParameter("skip") != null;
+        String powerUp = request.getParameter("powerUp");
+        if (powerUp != null) {
+            try {
+                attempt.usePowerUp(powerUp);
+            } catch (IllegalArgumentException | IllegalStateException exception) {
+                WebSupport.flash(session, App.FLASH_ERROR, exception.getMessage());
+            }
+            updateRoomProgress(request, session, attempt);
+            if (attempt.isComplete()) {
+                gradeAndStore(request, session, attempt);
+                WebSupport.redirect(request, response, "/result");
+            } else {
+                WebSupport.redirect(request, response, "/quiz");
+            }
+            return;
+        }
+
         try {
             attempt.answerCurrent(
                     request.getParameter("questionId"),
-                    skipped ? null : request.getParameter("answer")
+                    request.getParameter("timeout") == null ? request.getParameter("answer") : null
             );
         } catch (IllegalArgumentException | IllegalStateException exception) {
             WebSupport.flash(session, App.FLASH_ERROR, exception.getMessage());
@@ -73,6 +91,7 @@ public final class QuizServlet extends HttpServlet {
             return;
         }
 
+        updateRoomProgress(request, session, attempt);
         if (attempt.isComplete()) {
             gradeAndStore(request, session, attempt);
             WebSupport.redirect(request, response, "/result");
@@ -90,11 +109,43 @@ public final class QuizServlet extends HttpServlet {
 
         Result result = quizService.grade(attempt);
         repository.save(result);
+        if (attempt.getUserId() != null) {
+            ProgressionRepository progression = WebSupport.service(request, App.PROGRESSION_REPOSITORY);
+            var updatedProgression = progression.recordQuizCompletion(
+                    attempt.getUserId(), attempt.getId(), result.getScore(), result.getBonusPoints() > 0);
+            session.setAttribute(App.LAST_XP_AWARD, updatedProgression.getLastAward());
+        }
 
         session.removeAttribute(App.ATTEMPT);
+        Object roomCode = session.getAttribute(App.ROOM_CODE);
+        if (roomCode instanceof String code && attempt.getUserId() != null) {
+            session.setAttribute(App.LAST_ROOM_CODE, code);
+            RoomService rooms = WebSupport.service(request, App.ROOM_SERVICE);
+            try {
+                rooms.completeAttempt(code, attempt.getUserId(), result);
+            } catch (IllegalArgumentException | IllegalStateException exception) {
+                WebSupport.flash(session, App.FLASH_ERROR,
+                        "The live room ended before your result was posted. Your result is saved.");
+            }
+        }
+        session.removeAttribute(App.ROOM_CODE);
         session.setAttribute(App.LAST_RESULT, result);
         session.setAttribute(App.LAST_RESULT_ID, result.getId());
         return new GradeResult(result);
+    }
+
+    private void updateRoomProgress(HttpServletRequest request, HttpSession session, Attempt attempt) {
+        Object roomCode = session.getAttribute(App.ROOM_CODE);
+        if (roomCode instanceof String code && attempt.getUserId() != null) {
+            RoomService rooms = WebSupport.service(request, App.ROOM_SERVICE);
+            try {
+                rooms.recordProgress(code, attempt.getUserId(), attempt.getCurrentIndex());
+            } catch (IllegalArgumentException | IllegalStateException exception) {
+                session.removeAttribute(App.ROOM_CODE);
+                WebSupport.flash(session, App.FLASH_ERROR,
+                        "The live room ended. Your quiz can continue and your result will still be saved.");
+            }
+        }
     }
 
     /** Named result record just so the code tells the reader what it produced. */

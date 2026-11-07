@@ -1,6 +1,6 @@
 package com.quizly.service;
 
-import com.quizly.db.Database;
+import com.quizly.TestDatabase;
 import com.quizly.model.AnswerReview;
 import com.quizly.model.Result;
 import com.quizly.repository.ResultRepository;
@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -93,7 +92,7 @@ class LeaderboardServiceTest {
     }
 
     private ResultRepository repository() {
-        Database database = Database.inMemory("board-" + UUID.randomUUID());
+        var database = TestDatabase.create("board-" + UUID.randomUUID());
         database.initialize();
         return new ResultRepository(database);
     }

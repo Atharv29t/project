@@ -22,6 +22,7 @@ import java.util.stream.IntStream;
  */
 public final class QuizService {
 
+    public static final int QUESTIONS_PER_ATTEMPT = 6;
     private static final int MIN_NAME_LENGTH = 1;
     private static final int MAX_NAME_LENGTH = 40;
     private static final int PASS_MARK = 60;
@@ -48,15 +49,38 @@ public final class QuizService {
         Quiz quiz = quizRepository.findById(rawQuizId)
                 .orElseThrow(() -> new IllegalArgumentException("Please choose a valid quiz"));
 
-        List<QuestionInstance> shuffledQuestions = quiz.getQuestions().stream()
+        List<QuestionInstance> questionBank = quiz.getQuestions().stream()
                 .map(this::toShuffledInstance)
-                .collect(Collectors.collectingAndThen(Collectors.toList(), result -> {
-                    List<QuestionInstance> list = new ArrayList<>(result);
-                    java.util.Collections.shuffle(list);
-                    return List.copyOf(list);
-                }));
+                .collect(Collectors.toCollection(ArrayList::new));
+        List<QuestionInstance> shuffledQuestions = selectAttemptQuestions(questionBank);
+        int easiestIndex = IntStream.range(0, shuffledQuestions.size())
+                .boxed()
+                .min(java.util.Comparator.comparingInt(index -> shuffledQuestions.get(index).getDifficulty()))
+                .orElseThrow();
+        java.util.Collections.swap(shuffledQuestions, 0, easiestIndex);
 
         return new Attempt(UUID.randomUUID().toString(), userId, playerName, quiz, shuffledQuestions, Instant.now());
+    }
+
+    private List<QuestionInstance> selectAttemptQuestions(List<QuestionInstance> questionBank) {
+        List<QuestionInstance> selected = new ArrayList<>();
+        for (int difficulty = 1; difficulty <= 3; difficulty++) {
+            int targetDifficulty = difficulty;
+            List<QuestionInstance> candidates = questionBank.stream()
+                    .filter(question -> question.getDifficulty() == targetDifficulty)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            java.util.Collections.shuffle(candidates);
+            selected.addAll(candidates.subList(0, Math.min(2, candidates.size())));
+        }
+        if (selected.size() < QUESTIONS_PER_ATTEMPT) {
+            List<QuestionInstance> remaining = new ArrayList<>(questionBank);
+            remaining.removeAll(selected);
+            java.util.Collections.shuffle(remaining);
+            selected.addAll(remaining.subList(0,
+                    Math.min(QUESTIONS_PER_ATTEMPT - selected.size(), remaining.size())));
+        }
+        java.util.Collections.shuffle(selected);
+        return selected;
     }
 
     public Optional<Quiz> findQuiz(String quizId) {
@@ -84,7 +108,17 @@ public final class QuizService {
         int score = reviews.stream().filter(AnswerReview::isCorrect).mapToInt(review -> 1).sum();
         int total = reviews.size();
         int percentage = total == 0 ? 0 : (int) Math.round(score * 100.0 / total);
-
+        int bonusPoints = 0;
+        String doublePointsQuestionId = attempt.getDoublePointsQuestionId();
+        if (doublePointsQuestionId != null) {
+            for (QuestionInstance question : attempt.getQuestions()) {
+                if (question.getId().equals(doublePointsQuestionId)
+                        && question.isCorrect(attempt.getAnswers().get(question.getId()))) {
+                    bonusPoints = 1;
+                    break;
+                }
+            }
+        }
         return new Result(
                 attempt.getId(),
                 attempt.getUserId(),
@@ -94,6 +128,7 @@ public final class QuizService {
                 attempt.getQuiz().getIcon(),
                 attempt.getQuiz().getAccentColor(),
                 score,
+                bonusPoints,
                 total,
                 percentage,
                 Instant.now(),
@@ -124,7 +159,8 @@ public final class QuizService {
                 question.getPrompt(),
                 shuffledOptions,
                 question.getCorrectOption(),
-                question.getExplanation()
+                question.getExplanation(),
+                question.getDifficulty()
         );
     }
 }

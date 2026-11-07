@@ -3,6 +3,7 @@ package com.quizly.web;
 import com.quizly.model.Result;
 import com.quizly.model.User;
 import com.quizly.repository.ResultRepository;
+import com.quizly.repository.ProgressionRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -29,6 +30,7 @@ public final class ProfileServlet extends HttpServlet {
         }
 
         ResultRepository resultRepository = WebSupport.service(request, App.RESULT_REPOSITORY);
+        ProgressionRepository progressionRepository = WebSupport.service(request, App.PROGRESSION_REPOSITORY);
         List<Result> results = resultRepository.findByUser(user.getId());
 
         int best = results.stream().mapToInt(Result::getPercentage).max().orElse(0);
@@ -42,6 +44,7 @@ public final class ProfileServlet extends HttpServlet {
         request.setAttribute("attemptCount", results.size());
         request.setAttribute("bestPercentage", best);
         request.setAttribute("averagePercentage", average);
+        request.setAttribute("progression", progressionRepository.findByUserId(user.getId()));
         WebSupport.forward(request, response, "profile");
     }
 }

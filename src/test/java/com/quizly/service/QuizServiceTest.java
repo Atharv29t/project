@@ -1,7 +1,7 @@
 package com.quizly.service;
 
 import com.quizly.data.QuizCatalog;
-import com.quizly.db.Database;
+import com.quizly.TestDatabase;
 import com.quizly.model.AnswerReview;
 import com.quizly.model.Attempt;
 import com.quizly.model.QuestionInstance;
@@ -9,12 +9,13 @@ import com.quizly.model.Result;
 import com.quizly.repository.QuizRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 import org.junit.jupiter.api.function.Executable;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,7 +28,7 @@ class QuizServiceTest {
 
     @BeforeEach
     void setUp() {
-        Database database = Database.inMemory("quiz-" + UUID.randomUUID());
+        var database = TestDatabase.create("quiz-" + UUID.randomUUID());
         database.initialize();
         quizService = new QuizService(new QuizRepository(database));
     }
@@ -54,16 +55,23 @@ class QuizServiceTest {
         assertTrue(!attempt.isLastQuestion());
         assertEquals("dsa", attempt.getQuiz().getId());
 
-        // All six catalog questions are represented exactly once.
+        // Each run samples two questions from every difficulty tier.
         Map<String, Long> promptCounts = attempt.getQuestions().stream()
                 .collect(Collectors.groupingBy(QuestionInstance::getPrompt, Collectors.counting()));
         assertEquals(6, promptCounts.size());
         promptCounts.values().forEach(count -> assertEquals(1L, count));
+        for (int difficulty = 1; difficulty <= 3; difficulty++) {
+            int targetDifficulty = difficulty;
+            assertEquals(2, attempt.getQuestions().stream()
+                    .filter(question -> question.getDifficulty() == targetDifficulty)
+                    .count());
+        }
 
         // Option sets are preserved, but their order is re-created per question.
         var catalogQuestions = quizService.findQuiz("dsa");
         var originalPrompts = catalogQuestions.get().getQuestions().stream()
                 .collect(Collectors.toMap(question -> question.getPrompt(), question -> question.getOptions().size()));
+        assertEquals(12, originalPrompts.size());
         attempt.getQuestions().forEach(instance -> assertEquals(originalPrompts.get(instance.getPrompt()), instance.getOptions().size()));
     }
 
@@ -74,7 +82,8 @@ class QuizServiceTest {
                 .collect(Collectors.toMap(question -> question.getPrompt(),
                         question -> question.getOptions().get(question.getCorrectOptionIndex())));
 
-        for (QuestionInstance instance : attempt.getQuestions()) {
+        while (!attempt.isComplete()) {
+            QuestionInstance instance = attempt.getCurrentQuestion();
             attempt.answerCurrent(instance.getId(), correctByPrompt.get(instance.getPrompt()));
         }
 
@@ -89,6 +98,31 @@ class QuizServiceTest {
         List<AnswerReview> correctReviews = result.getReviews();
         assertEquals(6, correctReviews.size());
         assertTrue(correctReviews.stream().allMatch(AnswerReview::isCorrect));
+    }
+
+    @Test
+    void eachAttemptSamplesSixQuestionsFromTheFullBank() {
+        Attempt attempt = quizService.startAttempt("Ada", "java");
+        assertEquals(12, attempt.getQuiz().getQuestionCount());
+        assertEquals(6, attempt.getTotalQuestions());
+    }
+
+    @Test
+    void doublePointsGivesBonusPointAndXpEligibilityOnlyWhenMarkedAnswerIsCorrect() {
+        Attempt attempt = quizService.startAttempt("Ada", "java");
+        attempt.usePowerUp("doublePoints");
+
+        while (!attempt.isComplete()) {
+            QuestionInstance question = attempt.getCurrentQuestion();
+            attempt.answerCurrent(question.getId(), question.getCorrectOption());
+        }
+
+        Result result = quizService.grade(attempt);
+
+        assertEquals(6, result.getScore());
+        assertEquals(1, result.getBonusPoints());
+        assertEquals(7, result.getPoints());
+        assertEquals(100, result.getPercentage());
     }
 
     @Test

@@ -20,9 +20,19 @@ class QuizCatalogTest {
     }
 
     @Test
-    void everyQuestionIsValidAndUniqueId() {
+    void everyTrackHasTwelveValidQuestionsAcrossAllDifficultyLevels() {
         Set<String> questionIds = new HashSet<>();
         for (Quiz quiz : QuizCatalog.all()) {
+            assertEquals(12, quiz.getQuestionCount(), quiz.getId());
+            assertEquals(Set.of(1, 2, 3), quiz.getQuestions().stream()
+                    .map(question -> question.getDifficulty())
+                    .collect(java.util.stream.Collectors.toSet()));
+            for (int difficulty = 1; difficulty <= 3; difficulty++) {
+                int targetDifficulty = difficulty;
+                assertEquals(4, quiz.getQuestions().stream()
+                        .filter(question -> question.getDifficulty() == targetDifficulty)
+                        .count(), quiz.getId() + " difficulty " + targetDifficulty);
+            }
             for (var question : quiz.getQuestions()) {
                 assertTrue(questionIds.add(question.getId()), () -> "Duplicate question id: " + question.getId());
                 assertTrue(question.getOptions().size() >= 2);
@@ -30,7 +40,7 @@ class QuizCatalogTest {
                 assertEquals(question.getOptions().get(question.getCorrectOptionIndex()), question.getCorrectOption());
             }
         }
-        assertEquals(18, questionIds.size());
+        assertEquals(36, questionIds.size());
     }
 
     @Test
@@ -39,6 +49,6 @@ class QuizCatalogTest {
         assertTrue(QuizCatalog.findById(" brAinTraining ").isEmpty());
         assertTrue(QuizCatalog.findById(null).isEmpty());
         assertTrue(QuizCatalog.findById("").isEmpty());
-        assertEquals(18, QuizCatalog.totalQuestions());
+        assertEquals(36, QuizCatalog.totalQuestions());
     }
 }

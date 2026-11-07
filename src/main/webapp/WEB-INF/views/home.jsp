@@ -19,6 +19,7 @@
                     <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg>
                 </a>
                 <a class="btn btn-ghost" href="${ctx}/leaderboard">View leaderboard</a>
+                <a class="btn btn-ghost" href="${ctx}/room">Play live with friends</a>
             </div>
             <dl class="hero-stats">
                 <div class="stat stat-sky">
@@ -124,7 +125,7 @@
                     <div class="track-meta">
                         <span>
                             <svg class="icon" aria-hidden="true"><use href="#i-list"/></svg>
-                            ${quiz.questionCount} questions
+                            ${quiz.questionCount} question bank · 6 per run
                         </span>
                         <span>
                             <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>
