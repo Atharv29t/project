@@ -3,6 +3,10 @@
 A compact Java web application for multiple-choice learning quizzes. It is
 built around the syllabus requirements:
 
+For the complete architecture, feature implementation, Firestore layout,
+development setup, production hosting, and handover notes, see
+[PROJECT_HANDOVER.md](./PROJECT_HANDOVER.md).
+
 - **Lambda expressions** — predicates, comparators, streams and method
   references drive filtering, randomisation and sorting.
 - **Collections framework** — hash maps for lookups, linked maps/lists for
@@ -16,7 +20,7 @@ built around the syllabus requirements:
 ## Features
 
 - Three quiz tracks: **Java Fundamentals**, **DSA Essentials**, **Web & JSP**.
-- Twelve questions in each track's bank (four per difficulty); each attempt
+- Twenty-four questions in each track's bank (eight per difficulty); each attempt
   samples six questions (two per difficulty) and adapts toward harder or
   easier questions based on each answer.
 - Answers are evaluated on completion and a full answer review is shown.
@@ -27,7 +31,8 @@ built around the syllabus requirements:
 - Voice mode reads questions and choices aloud and can select a spoken answer.
 - Live room-code games with 2–20 signed-in players and a WebSocket leaderboard.
 - Restart-safe leaderboard (top 10) by quiz and overall.
-- Basic CSRF protection, session handling, UTF-8 encoding and security headers.
+- Basic CSRF protection, 24-hour servlet-session inactivity timeout, UTF-8
+  encoding and security headers.
 - Playful warm theme (cream · orange · sky · violet) with black pill badges,
   colour-mosaic stat tiles, a gold/silver/bronze top-3 podium, and a floating
   trophy on the win screen.
@@ -101,6 +106,25 @@ profile of `pom.xml`.
 
 To stop the dev server press `Ctrl + C`.
 
+## Host on Vercel
+
+Quizly is deployed as a Tomcat container using the root `Dockerfile`. Set these
+Production environment variables in the Vercel project:
+
+- `QUIZLY_FIREBASE_PROJECT_ID`
+- `QUIZLY_FIREBASE_CREDENTIALS_JSON` — the complete service-account JSON,
+  stored as a sensitive variable
+
+Never commit or share the service-account key. Redeploy after updating
+environment variables. The current production URL is
+<https://online-quiz-app-nine-sooty.vercel.app/>.
+
+The application currently stores servlet sessions and live-room state in
+process memory. Vercel may recycle or route requests across container
+instances, so active quiz sessions and multiplayer rooms are not guaranteed to
+survive those events. See [PROJECT_HANDOVER.md](./PROJECT_HANDOVER.md#production-deployment)
+before relying on those flows for production users.
+
 ## Deploy to an existing Tomcat
 
 1. Build without the dev profile:
@@ -161,10 +185,13 @@ Quizly; MongoDB environment variables are only needed by the migration tool.
 
 ## Progression, power-ups and live play
 
-- Each track has 12 rated questions: four easy, four medium, and four hard.
-  Every attempt samples two from each tier, starts with an easy question, then
-  targets a harder question after a correct answer or an easier one after a
-  miss. Questions and options are shuffled for replay variety.
+- Each track has 24 rated questions: eight easy, eight medium, and eight hard.
+  Every attempt independently shuffles the bank and answer options, samples two
+  questions from each tier, shuffles those six, and starts with an easy one.
+  After each response, the next question is selected from the remaining six:
+  correct answers target a harder tier and misses target an easier tier; if
+  that tier is empty, the closest available tier is used. Adaptation reorders
+  the sampled six and does not add questions from the rest of the bank.
 - Questions have a 30-second server-checked timer. Expired questions are
   recorded as unanswered.
 - **50/50** leaves the correct choice and one distractor; **Double points**
@@ -182,6 +209,9 @@ Quizly; MongoDB environment variables are only needed by the migration tool.
 - Voice mode uses browser speech synthesis and recognition. Spoken choices are
   matched to the visible options; players can review the selected option before
   submitting it. Browser microphone permission is required.
+- Servlet sessions expire after 24 hours of inactivity. On Vercel, session
+  state remains in container memory, so a container restart or routing to a
+  different instance can still interrupt an active quiz.
 
 ## Project structure
 

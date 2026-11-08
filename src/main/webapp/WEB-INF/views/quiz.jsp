@@ -112,9 +112,9 @@
             <details class="aside-card quiz-note">
                 <summary>
                     <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
-                    Can I change an answer?
+                    How does the shuffle work?
                 </summary>
-                <p>Your next question adapts to your answer: correct answers raise the difficulty, and misses lower it. Use 50/50 to remove two wrong choices, or activate Double points before answering to earn a bonus point and XP for a correct answer. Each power-up can be used once per quiz.</p>
+                <p>Each track has 24 questions: eight easy, eight medium, and eight hard. A run randomly picks two from each level, shuffles their order and the answer choices, then starts with an easy question. After each answer, correct answers target a harder question from the remaining six; a miss targets an easier one. If that level is unavailable, the closest remaining level is used. This adapts the order of this run's six questions; it does not add questions from outside the selected six. Use 50/50 to remove two wrong choices, or activate Double points before answering to earn a bonus point and XP for a correct answer. Each power-up can be used once per quiz.</p>
             </details>
         </aside>
     </div>

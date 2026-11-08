@@ -71,7 +71,7 @@ class QuizServiceTest {
         var catalogQuestions = quizService.findQuiz("dsa");
         var originalPrompts = catalogQuestions.get().getQuestions().stream()
                 .collect(Collectors.toMap(question -> question.getPrompt(), question -> question.getOptions().size()));
-        assertEquals(12, originalPrompts.size());
+        assertEquals(24, originalPrompts.size());
         attempt.getQuestions().forEach(instance -> assertEquals(originalPrompts.get(instance.getPrompt()), instance.getOptions().size()));
     }
 
@@ -103,7 +103,7 @@ class QuizServiceTest {
     @Test
     void eachAttemptSamplesSixQuestionsFromTheFullBank() {
         Attempt attempt = quizService.startAttempt("Ada", "java");
-        assertEquals(12, attempt.getQuiz().getQuestionCount());
+        assertEquals(24, attempt.getQuiz().getQuestionCount());
         assertEquals(6, attempt.getTotalQuestions());
     }
 

@@ -13,30 +13,41 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Reads the quiz catalogue, questions and options from Firestore.
+ * Reads and caches the Firestore quiz catalogue for this application instance.
  */
 public final class QuizRepository {
 
     private final DocumentStore store;
+    private volatile List<Quiz> cachedQuizzes;
 
     public QuizRepository(Database database) {
         this.store = database.store();
     }
 
     public List<Quiz> findAll() {
-        return store.findAll("quizzes").stream()
-                .sorted(Comparator.comparingInt((Map<String, Object> document) -> number(document.get("sortOrder"), 0))
-                        .thenComparing(document -> (String) document.getOrDefault("title", "")))
-                .map(this::mapQuiz)
-                .toList();
+        List<Quiz> quizzes = cachedQuizzes;
+        if (quizzes != null) {
+            return quizzes;
+        }
+        synchronized (this) {
+            if (cachedQuizzes == null) {
+                cachedQuizzes = store.findAll("quizzes").stream()
+                        .sorted(Comparator.comparingInt((Map<String, Object> document) -> number(document.get("sortOrder"), 0))
+                                .thenComparing(document -> (String) document.getOrDefault("title", "")))
+                        .map(this::mapQuiz)
+                        .toList();
+            }
+            return cachedQuizzes;
+        }
     }
 
     public Optional<Quiz> findById(String quizId) {
         if (quizId == null || quizId.isBlank()) {
             return Optional.empty();
         }
-        Map<String, Object> document = store.find("quizzes", quizId);
-        return document == null ? Optional.empty() : Optional.of(mapQuiz(document));
+        return findAll().stream()
+                .filter(quiz -> quiz.getId().equals(quizId))
+                .findFirst();
     }
 
     public int totalQuestions() {

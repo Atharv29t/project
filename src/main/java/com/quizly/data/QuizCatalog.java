@@ -152,6 +152,102 @@ public final class QuizCatalog {
                                 0,
                                 "collect is a terminal reduction operation that gathers stream elements into containers or other summary results.",
                                 3
+                        ),
+                        new Question(
+                                "java-13",
+                                "What is a class in object-oriented Java?",
+                                List.of("A blueprint for creating objects", "A running Java process", "A database table only", "A type of loop"),
+                                0,
+                                "A class declares the state and behavior that its objects share; each object is an instance of that class.",
+                                1
+                        ),
+                        new Question(
+                                "java-14",
+                                "Which primitive type stores a whole number?",
+                                List.of("boolean", "int", "char", "double"),
+                                1,
+                                "The int primitive stores a signed 32-bit whole number. A double is used for floating-point values.",
+                                1
+                        ),
+                        new Question(
+                                "java-15",
+                                "Which keyword creates a new object using a constructor?",
+                                List.of("make", "new", "create", "instance"),
+                                1,
+                                "The new operator allocates an object and invokes one of its constructors, for example new ArrayList<>().",
+                                1
+                        ),
+                        new Question(
+                                "java-16",
+                                "Which Java type represents a sequence of characters?",
+                                List.of("String", "boolean", "int", "char"),
+                                0,
+                                "String represents text. A String is immutable, so operations that appear to change it produce another String.",
+                                1
+                        ),
+                        new Question(
+                                "java-17",
+                                "Which interface represents a function that accepts a value and returns a transformed value?",
+                                List.of("Consumer<T>", "Function<T, R>", "Predicate<T>", "Supplier<T>"),
+                                1,
+                                "Function<T, R> accepts an input of type T and returns a result of type R; Stream.map commonly accepts one.",
+                                2
+                        ),
+                        new Question(
+                                "java-18",
+                                "What does Comparator.comparing() help define?",
+                                List.of("A sort order based on a selected property", "A database connection", "A thread pool", "A new collection type"),
+                                0,
+                                "Comparator.comparing extracts a comparable key from each object and builds a comparator that orders objects by that key.",
+                                2
+                        ),
+                        new Question(
+                                "java-19",
+                                "What does a Java record provide?",
+                                List.of("A concise carrier for data with generated accessors", "A mutable global variable", "A database transaction", "A loop over a collection"),
+                                0,
+                                "A record is a concise way to model data; the compiler generates accessors, equals, hashCode, and toString.",
+                                2
+                        ),
+                        new Question(
+                                "java-20",
+                                "What does the static keyword mean for a class member?",
+                                List.of("It belongs to the class rather than each instance", "It can never be called", "It is automatically private", "It is stored only on disk"),
+                                0,
+                                "A static member is associated with its class and is shared rather than copied into each instance.",
+                                2
+                        ),
+                        new Question(
+                                "java-21",
+                                "What does a generic type parameter such as List<String> provide?",
+                                List.of("Compile-time type checking for list elements", "Automatic sorting", "Thread safety", "A fixed list capacity"),
+                                0,
+                                "Generics let the compiler check element types and help prevent invalid values from being added to a typed collection.",
+                                3
+                        ),
+                        new Question(
+                                "java-22",
+                                "Why is try-with-resources useful?",
+                                List.of("It closes declared resources automatically", "It retries every exception forever", "It catches all errors silently", "It makes every object immutable"),
+                                0,
+                                "Resources declared in try-with-resources are closed automatically when the block exits, including when an exception is thrown.",
+                                3
+                        ),
+                        new Question(
+                                "java-23",
+                                "What does flatMap() commonly do in a stream pipeline?",
+                                List.of("Maps each item to a stream and flattens the streams", "Sorts by two fields", "Removes every null value", "Runs the stream twice"),
+                                0,
+                                "flatMap transforms each input into a stream and combines the resulting streams into one stream of elements.",
+                                3
+                        ),
+                        new Question(
+                                "java-24",
+                                "What is the main purpose of an exception's finally block?",
+                                List.of("Run cleanup code whether or not an exception occurred", "Declare a new class", "Retry the method automatically", "Suppress the return value"),
+                                0,
+                                "A finally block normally runs after try/catch processing and is commonly used for cleanup; try-with-resources is preferred for closeable resources.",
+                                3
                         )
                 )
         ));
@@ -265,6 +361,102 @@ public final class QuizCatalog {
                                 ),
                                 1,
                                 "In a binary search tree, values in the left subtree are ordered below the node and values in the right subtree above it.",
+                                3
+                        ),
+                        new Question(
+                                "dsa-13",
+                                "Which structure stores elements in contiguous indexed positions?",
+                                List.of("Array", "Graph", "Stack frame", "Trie"),
+                                0,
+                                "An array stores elements in indexed positions and provides constant-time access when the index is known.",
+                                1
+                        ),
+                        new Question(
+                                "dsa-14",
+                                "What is the worst-case time complexity of checking every item with linear search?",
+                                List.of("O(1)", "O(log n)", "O(n)", "O(n log n)"),
+                                2,
+                                "In the worst case, linear search inspects all n items before finding a match or determining that it is absent.",
+                                1
+                        ),
+                        new Question(
+                                "dsa-15",
+                                "Which data structure is commonly used to undo the most recent action first?",
+                                List.of("Queue", "Stack", "Graph", "Hash table"),
+                                1,
+                                "A stack's last-in, first-out behavior makes it suitable for undo histories where the newest action is reversed first.",
+                                1
+                        ),
+                        new Question(
+                                "dsa-16",
+                                "In a singly linked list, what does each node usually store besides its value?",
+                                List.of("A reference to the next node", "Its sorted rank", "Every other node's value", "A binary-search index"),
+                                0,
+                                "Each node in a singly linked list stores its value and a reference to the next node in the chain.",
+                                1
+                        ),
+                        new Question(
+                                "dsa-17",
+                                "What is the worst-case time complexity of inserting into a balanced binary search tree?",
+                                List.of("O(1)", "O(log n)", "O(n²)", "O(2ⁿ)"),
+                                1,
+                                "A balanced tree has logarithmic height, so searching for the insertion position and inserting takes O(log n).",
+                                2
+                        ),
+                        new Question(
+                                "dsa-18",
+                                "What does a hash function help a hash table determine?",
+                                List.of("Which bucket should store a key", "The graph's shortest path", "The array's length", "The next item in a queue"),
+                                0,
+                                "A hash function converts a key into a hash value used to choose a bucket; collisions still need to be handled.",
+                                2
+                        ),
+                        new Question(
+                                "dsa-19",
+                                "What is the time complexity of merging two already-sorted lists with a two-pointer scan?",
+                                List.of("O(1)", "O(log n)", "O(n + m)", "O(n × m)"),
+                                2,
+                                "Each pointer advances through its list at most once, so merging lists of lengths n and m takes O(n + m) time.",
+                                2
+                        ),
+                        new Question(
+                                "dsa-20",
+                                "Which traversal explores a tree one depth level at a time?",
+                                List.of("Inorder", "Preorder", "Breadth-first / level-order", "Postorder"),
+                                2,
+                                "Level-order traversal visits nodes by depth, typically using a queue to process the current level before the next.",
+                                2
+                        ),
+                        new Question(
+                                "dsa-21",
+                                "What is the key idea of dynamic programming?",
+                                List.of("Store and reuse results of overlapping subproblems", "Sort every input first", "Always choose the largest value", "Replace recursion with hashing only"),
+                                0,
+                                "Dynamic programming avoids repeated work by storing solutions to overlapping subproblems, often using memoization or a table.",
+                                3
+                        ),
+                        new Question(
+                                "dsa-22",
+                                "Which algorithm finds a minimum spanning tree by repeatedly choosing the lightest edge that joins two components?",
+                                List.of("Kruskal's algorithm", "Binary search", "BFS", "Insertion sort"),
+                                0,
+                                "Kruskal's algorithm processes edges by weight and uses a disjoint-set structure to avoid adding edges that create a cycle.",
+                                3
+                        ),
+                        new Question(
+                                "dsa-23",
+                                "Which condition is required for a topological ordering of a directed graph?",
+                                List.of("The graph is a directed acyclic graph", "Every vertex has degree two", "All edges have equal weights", "The graph is a complete tree"),
+                                0,
+                                "A directed acyclic graph (DAG) has at least one topological ordering; directed cycles make such an ordering impossible.",
+                                3
+                        ),
+                        new Question(
+                                "dsa-24",
+                                "What is the main trade-off of memoization?",
+                                List.of("It uses extra storage to avoid recomputing subproblems", "It removes the need to define a recurrence", "It always reduces memory usage", "It only works for sorted arrays"),
+                                0,
+                                "Memoization caches previously computed subproblem results, saving time at the cost of additional memory.",
                                 3
                         )
                 )
@@ -394,6 +586,102 @@ public final class QuizCatalog {
                                 List.of("Service layer", "JSP markup", "URL fragment", "CSS stylesheet"),
                                 0,
                                 "Business rules belong in the service or domain layer, keeping request handling and JSP rendering focused on their own responsibilities.",
+                                3
+                        ),
+                        new Question(
+                                "web-13",
+                                "Which HTML element creates a hyperlink?",
+                                List.of("<a>", "<p>", "<img>", "<table>"),
+                                0,
+                                "The anchor element, <a>, creates a hyperlink; its href attribute specifies the destination.",
+                                1
+                        ),
+                        new Question(
+                                "web-14",
+                                "Which HTTP status code indicates that a requested page was not found?",
+                                List.of("200", "302", "404", "503"),
+                                2,
+                                "HTTP 404 Not Found means the server could not find a representation for the requested resource.",
+                                1
+                        ),
+                        new Question(
+                                "web-15",
+                                "Which part of a URL normally identifies the server host?",
+                                List.of("Path", "Host name", "Query parameter", "Fragment"),
+                                1,
+                                "The host name identifies the server in a URL, for example example.com in https://example.com/docs.",
+                                1
+                        ),
+                        new Question(
+                                "web-16",
+                                "What does CSS primarily control?",
+                                List.of("The visual presentation of web documents", "Database transactions", "HTTP routing", "Java object lifecycles"),
+                                0,
+                                "CSS describes presentation such as layout, colors, and typography, while HTML supplies document structure.",
+                                1
+                        ),
+                        new Question(
+                                "web-17",
+                                "What is an HTTP cookie commonly used for?",
+                                List.of("Sending small client-held values with later requests", "Storing an entire database", "Compiling JSP files", "Replacing TLS"),
+                                0,
+                                "Browsers store cookies and send them on matching later requests; applications commonly use them to identify a session.",
+                                2
+                        ),
+                        new Question(
+                                "web-18",
+                                "What does RequestDispatcher.forward() do?",
+                                List.of("Passes the same request to another server-side resource", "Redirects the browser to another domain", "Closes the HTTP connection", "Starts a WebSocket"),
+                                0,
+                                "A forward dispatches the existing request and response to another server-side resource without a new browser request.",
+                                2
+                        ),
+                        new Question(
+                                "web-19",
+                                "What does HTTP status 302 usually tell a browser to do?",
+                                List.of("Make a temporary redirect to another URL", "Delete its cookies", "Retry with a WebSocket", "Treat the response as a server error"),
+                                0,
+                                "A 302 response with a Location header asks the browser to temporarily request a different URL.",
+                                2
+                        ),
+                        new Question(
+                                "web-20",
+                                "Why is a context-relative URL useful in a Java web application?",
+                                List.of("It works when the application is deployed under different context paths", "It embeds the database password", "It disables cookies", "It turns HTTP into HTTPS"),
+                                0,
+                                "Including the deployed context path prevents links from breaking when the WAR is not mounted at the server root.",
+                                2
+                        ),
+                        new Question(
+                                "web-21",
+                                "What is the purpose of a CSRF token in a form?",
+                                List.of("To help verify that a state-changing request came from the user's session", "To compress the HTML", "To encrypt every database field", "To choose a load balancer"),
+                                0,
+                                "A session-bound CSRF token lets the server distinguish the site's intended form submission from a forged cross-site request.",
+                                3
+                        ),
+                        new Question(
+                                "web-22",
+                                "What protection does an HttpOnly cookie flag provide?",
+                                List.of("Prevents browser JavaScript from reading the cookie", "Encrypts the cookie value", "Makes the cookie permanent", "Restricts the cookie to POST requests"),
+                                0,
+                                "HttpOnly prevents scripts running in the browser from reading the cookie through document.cookie; it does not itself encrypt the cookie.",
+                                3
+                        ),
+                        new Question(
+                                "web-23",
+                                "Why does a server send Cache-Control: no-store for a private quiz page?",
+                                List.of("To tell caches not to store the response", "To sort the quiz questions", "To validate a password", "To enable compression"),
+                                0,
+                                "no-store instructs browsers and intermediary caches not to retain the response, which helps protect session-specific content.",
+                                3
+                        ),
+                        new Question(
+                                "web-24",
+                                "What does a Content Security Policy primarily help control?",
+                                List.of("Which sources the browser may load or execute content from", "How Firestore ranks quiz results", "How long a Java thread runs", "Which SQL rows are updated"),
+                                0,
+                                "A Content Security Policy lets a site restrict permitted sources for scripts, styles, images, connections, and other browser resources.",
                                 3
                         )
                 )

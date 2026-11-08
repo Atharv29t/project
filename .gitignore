@@ -8,3 +8,5 @@ quiz-results.csv
 *.mv.db
 *.trace.db
 *.lock.db
+
+.vercel

@@ -8,7 +8,9 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
 import com.google.auth.oauth2.GoogleCredentials;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +41,7 @@ public final class FirestoreDocumentStore implements DocumentStore {
                 ownsApp = false;
             } else {
                 FirebaseOptions options = FirebaseOptions.builder()
-                        .setCredentials(GoogleCredentials.getApplicationDefault())
+                        .setCredentials(firebaseCredentials())
                         .setProjectId(projectId)
                         .build();
                 app = FirebaseApp.initializeApp(options, APP_NAME);
@@ -51,6 +53,15 @@ public final class FirestoreDocumentStore implements DocumentStore {
                     "Could not connect to Firebase. Check QUIZLY_FIREBASE_PROJECT_ID and Google credentials.",
                     exception);
         }
+    }
+
+    private static GoogleCredentials firebaseCredentials() throws IOException {
+        String credentialJson = System.getenv("QUIZLY_FIREBASE_CREDENTIALS_JSON");
+        if (credentialJson != null && !credentialJson.isBlank()) {
+            return GoogleCredentials.fromStream(
+                    new ByteArrayInputStream(credentialJson.getBytes(StandardCharsets.UTF_8)));
+        }
+        return GoogleCredentials.getApplicationDefault();
     }
 
     @Override

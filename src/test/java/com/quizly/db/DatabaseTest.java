@@ -41,10 +41,10 @@ class DatabaseTest {
         database.initialize();
 
         var javaQuiz = new QuizRepository(database).findById("java").orElseThrow();
-        assertEquals(13, javaQuiz.getQuestionCount());
+        assertEquals(25, javaQuiz.getQuestionCount());
         assertTrue(javaQuiz.getQuestions().stream()
                 .anyMatch(question -> question.getId().equals("custom-java-question")));
         assertEquals(3, new QuizRepository(database).findAll().size());
-        assertEquals(12, QuizCatalog.findById("dsa").orElseThrow().getQuestionCount());
+        assertEquals(24, QuizCatalog.findById("dsa").orElseThrow().getQuestionCount());
     }
 }
