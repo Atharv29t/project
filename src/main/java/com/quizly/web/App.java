@@ -15,6 +15,7 @@ public final class App {
     public static final String RESULT_REPOSITORY = "resultRepository";
     public static final String PROGRESSION_REPOSITORY = "progressionRepository";
     public static final String ROOM_SERVICE = "roomService";
+    public static final String QUIZ_ADMIN_SERVICE = "quizAdminService";
 
     public static final String ATTEMPT = "attempt";
     public static final String LAST_RESULT = "lastResult";

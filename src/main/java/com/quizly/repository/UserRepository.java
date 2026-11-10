@@ -34,6 +34,7 @@ public final class UserRepository {
         document.put("passwordHash", user.getPasswordHash());
         document.put("createdAt", Date.from(user.getCreatedAt()));
         document.put("lastLoginAt", user.getLastLoginAt() == null ? null : Date.from(user.getLastLoginAt()));
+        document.put("role", "player");
         store.transact(transaction -> {
             if (transaction.find(EMAIL_LOOKUPS, emailKey) != null) {
                 throw new IllegalStateException("A user account with that ID or email already exists");
@@ -78,7 +79,8 @@ public final class UserRepository {
                 (String) document.get("email"),
                 (String) document.get("passwordHash"),
                 instant(document.get("createdAt")),
-                document.get("lastLoginAt") == null ? null : instant(document.get("lastLoginAt"))
+                document.get("lastLoginAt") == null ? null : instant(document.get("lastLoginAt")),
+                document.get("role") instanceof String role ? role : "player"
         );
     }
 

@@ -51,6 +51,7 @@ public final class Database implements AutoCloseable {
                 item.put("correctOptionIndex", question.getCorrectOptionIndex());
                 item.put("difficulty", question.getDifficulty());
                 item.put("explanation", question.getExplanation());
+                item.put("status", "published");
                 questions.add(item);
             }
             Map<String, Object> document = new HashMap<>();
@@ -62,25 +63,31 @@ public final class Database implements AutoCloseable {
             document.put("estimatedMinutes", quiz.getEstimatedMinutes());
             document.put("accentColor", quiz.getAccentColor());
             document.put("sortOrder", quizIndex);
+            document.put("status", "published");
             document.put("questions", questions);
+            document.put("contentManaged", true);
             store.transact(transaction -> {
                 Map<String, Object> existing = transaction.find("quizzes", quiz.getId());
                 if (existing == null) {
+                    document.put("createdAt", java.util.Date.from(java.time.Instant.now()));
                     transaction.create("quizzes", quiz.getId(), document);
-                } else {
-                    List<Map<String, Object>> mergedQuestions = mergeQuestions(existing.get("questions"), questions);
-                    Map<String, Object> mergedQuiz = new HashMap<>(existing);
-                    mergedQuiz.remove("_id");
-                    mergedQuiz.putAll(document);
-                    mergedQuiz.put("questions", mergedQuestions);
-                    transaction.set("quizzes", quiz.getId(), mergedQuiz);
+                } else if (!Boolean.TRUE.equals(existing.get("contentManaged"))) {
+                    List<Map<String, Object>> mergedQuestions = mergeLegacyQuestions(existing.get("questions"), questions);
+                    Map<String, Object> migrated = new HashMap<>(existing);
+                    migrated.remove("_id");
+                    migrated.putAll(document);
+                    migrated.put("questions", mergedQuestions);
+                    migrated.put("contentManaged", true);
+                    transaction.set("quizzes", quiz.getId(), migrated);
                 }
                 return null;
             });
         }
     }
 
-    private List<Map<String, Object>> mergeQuestions(Object storedValue, List<Map<String, Object>> currentQuestions) {
+    /** One-time compatibility merge for quiz documents written before admin editing existed. */
+    private List<Map<String, Object>> mergeLegacyQuestions(Object storedValue,
+                                                            List<Map<String, Object>> catalogueQuestions) {
         List<Map<String, Object>> merged = new ArrayList<>();
         if (storedValue instanceof List<?> storedQuestions) {
             for (Object value : storedQuestions) {
@@ -91,10 +98,10 @@ public final class Database implements AutoCloseable {
                 }
             }
         }
-        java.util.Set<Object> existingIds = merged.stream().map(question -> question.get("id"))
+        java.util.Set<Object> ids = merged.stream().map(question -> question.get("id"))
                 .collect(java.util.stream.Collectors.toSet());
-        for (Map<String, Object> question : currentQuestions) {
-            if (existingIds.add(question.get("id"))) {
+        for (Map<String, Object> question : catalogueQuestions) {
+            if (ids.add(question.get("id"))) {
                 merged.add(question);
             }
         }

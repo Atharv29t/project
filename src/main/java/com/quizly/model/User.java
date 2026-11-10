@@ -22,15 +22,22 @@ public final class User {
     private final String passwordHash;
     private final Instant createdAt;
     private final Instant lastLoginAt;
+    private final String role;
 
     public User(String id, String name, String email, String passwordHash,
                 Instant createdAt, Instant lastLoginAt) {
+        this(id, name, email, passwordHash, createdAt, lastLoginAt, "player");
+    }
+
+    public User(String id, String name, String email, String passwordHash,
+                Instant createdAt, Instant lastLoginAt, String role) {
         this.id = Objects.requireNonNull(id, "id");
         this.name = Objects.requireNonNull(name, "name");
         this.email = Objects.requireNonNull(email, "email");
         this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.lastLoginAt = lastLoginAt;
+        this.role = role == null || role.isBlank() ? "player" : role.strip().toLowerCase(Locale.ROOT);
     }
 
     public String getId() {
@@ -57,6 +64,14 @@ public final class User {
         return lastLoginAt;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public boolean isAdmin() {
+        return "admin".equals(role);
+    }
+
     public String getInitials() {
         String[] parts = name.strip().split("\\s+");
         StringBuilder initials = new StringBuilder(parts[0].substring(0, 1));
@@ -75,6 +90,6 @@ public final class User {
     }
 
     public User withLastLoginAt(Instant loginAt) {
-        return new User(id, name, email, passwordHash, createdAt, loginAt);
+        return new User(id, name, email, passwordHash, createdAt, loginAt, role);
     }
 }

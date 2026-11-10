@@ -8,6 +8,7 @@ import com.quizly.repository.UserRepository;
 import com.quizly.service.AuthService;
 import com.quizly.service.LeaderboardService;
 import com.quizly.service.QuizService;
+import com.quizly.service.QuizAdminService;
 import com.quizly.service.RoomService;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -40,6 +41,7 @@ public final class AppContextListener implements ServletContextListener {
         ResultRepository resultRepository = new ResultRepository(database);
         ProgressionRepository progressionRepository = new ProgressionRepository(database);
         QuizService quizService = new QuizService(quizRepository);
+        QuizAdminService quizAdminService = new QuizAdminService(quizRepository);
         RoomService roomService = new RoomService(quizRepository);
         RoomEndpointConfigurator.setRoomService(roomService);
         AuthService authService = new AuthService(userRepository);
@@ -52,6 +54,7 @@ public final class AppContextListener implements ServletContextListener {
         event.getServletContext().setAttribute(App.PROGRESSION_REPOSITORY, progressionRepository);
         event.getServletContext().setAttribute(App.ROOM_SERVICE, roomService);
         event.getServletContext().setAttribute(App.QUIZ_SERVICE, quizService);
+        event.getServletContext().setAttribute(App.QUIZ_ADMIN_SERVICE, quizAdminService);
         event.getServletContext().setAttribute(App.AUTH_SERVICE, authService);
         event.getServletContext().setAttribute(App.LEADERBOARD_SERVICE, leaderboardService);
 

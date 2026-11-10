@@ -16,7 +16,7 @@
     <c:set var="playLabel" value="Log in" />
 </c:if>
 
-<nav class="mobile-tabs" aria-label="Mobile navigation">
+<nav class="mobile-tabs ${sessionScope.currentUser.admin ? 'has-admin' : ''}" aria-label="Mobile navigation">
     <a class="tab-item ${activeNav eq 'home' ? 'is-active' : ''}" href="${ctx}/">
         <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
         <span>Home</span>
@@ -33,6 +33,12 @@
         <svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>
         <span>Board</span>
     </a>
+    <c:if test="${sessionScope.currentUser.admin}">
+        <a class="tab-item ${activeNav eq 'admin' ? 'is-active' : ''}" href="${ctx}/admin">
+            <svg class="icon" aria-hidden="true"><use href="#i-list"/></svg>
+            <span>Admin</span>
+        </a>
+    </c:if>
     <a class="tab-item ${activeNav eq 'result' ? 'is-active' : ''}" href="${reviewHref}">
         <svg class="icon" aria-hidden="true"><use href="#i-review"/></svg>
         <span>Review</span>

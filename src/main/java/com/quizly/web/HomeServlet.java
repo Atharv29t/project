@@ -26,7 +26,7 @@ public final class HomeServlet extends HttpServlet {
         LeaderboardService leaderboard = WebSupport.service(request, App.LEADERBOARD_SERVICE);
         QuizRepository quizRepository = WebSupport.service(request, App.QUIZ_REPOSITORY);
         List<LeaderboardEntry> topThree = leaderboard.topEntries(null, 3);
-        var quizzes = quizRepository.findAll();
+        var quizzes = quizRepository.findPublished();
 
         request.setAttribute(App.ACTIVE_NAV, "home");
         request.setAttribute("quizzes", quizzes);
