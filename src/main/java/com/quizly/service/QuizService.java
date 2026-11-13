@@ -46,7 +46,7 @@ public final class QuizService {
 
     private Attempt startAttempt(String userId, String rawName, String rawQuizId) {
         String playerName = normaliseName(rawName);
-        Quiz quiz = quizRepository.findById(rawQuizId)
+        Quiz quiz = quizRepository.findPublishedById(rawQuizId)
                 .orElseThrow(() -> new IllegalArgumentException("Please choose a valid quiz"));
 
         List<QuestionInstance> questionBank = quiz.getQuestions().stream()
@@ -84,7 +84,7 @@ public final class QuizService {
     }
 
     public Optional<Quiz> findQuiz(String quizId) {
-        return quizRepository.findById(quizId);
+        return quizRepository.findPublishedById(quizId);
     }
 
     /**

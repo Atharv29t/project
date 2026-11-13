@@ -80,8 +80,10 @@ src/test/java/com/quizly/       JUnit tests; data tests use an in-memory documen
 1. Tomcat starts the WAR and invokes `AppContextListener`.
 2. `Database.appDatabase()` reads the Firebase project ID and initializes the
    Firebase Admin SDK credentials.
-3. `Database.initialize()` seeds or merges the built-in quiz catalogue into
-   Firestore.
+3. `Database.initialize()` creates missing starter quiz documents and marks
+   them as managed. It performs a one-time merge for legacy quiz documents
+   without the `contentManaged` marker; later restarts do not overwrite admin
+   edits or restore archived content.
 4. The listener constructs repositories and services once and stores them in
    the ServletContext under names defined in `App`.
 5. Servlets obtain those shared instances with `WebSupport.service(...)`.
@@ -99,6 +101,8 @@ does not silently fall back to in-memory storage in production.
 - `AppFilter` applies UTF-8, browser security headers, CSRF-token initialization,
   and one-request flash messages.
 - `AuthenticationFilter` protects quiz, result, profile, and room routes.
+- `AdminAuthorizationFilter` re-reads the account role from Firestore and
+  protects every `/admin` request.
 - Forms use POST for state-changing operations and include a CSRF token.
 - `App` centralizes ServletContext and session attribute names.
 
@@ -113,14 +117,24 @@ medium, eight hard). The catalogue is the source for seeding; normal runtime
 reads the Firestore `quizzes` collection through `QuizRepository`.
 
 At startup the seed process uses each track ID as its Firestore document ID.
-It updates track metadata and merges questions by question ID. Existing
-question IDs and custom Firestore questions are retained rather than replaced.
-Consequently, editing a question with an ID already stored in Firestore does
-not automatically overwrite that stored question; use a deliberate data update
-or a new question ID when changing already-seeded content.
-`QuizRepository` caches the loaded catalogue for the lifetime of the app
-instance, avoiding repeated Firestore reads for the home page and quiz starts.
-Changes made directly in Firestore are picked up after the app restarts.
+New starter tracks are created once. Legacy track documents without
+`contentManaged: true` receive one compatibility merge of built-in questions;
+the marker is then written. Admin-managed documents are left alone on later
+starts, so archived content is not reintroduced from `QuizCatalog`.
+
+Quiz tracks and questions have `draft`, `published`, and `archived` states.
+Missing status fields in existing Firestore data default to `published`.
+Player flows receive only published tracks and questions; publishing a track
+requires at least two published questions at each difficulty. Archiving keeps
+the content for previous answer reviews. `QuizRepository` uses a short-lived
+15-second cache, invalidated immediately after an admin write, so other app
+instances pick up updates after cache expiry.
+
+The first admin is provisioned manually: register the account normally, then
+set `role: "admin"` on its `users/{userId}` document in Firestore. New accounts
+and legacy accounts without a role are players. There is no admin signup form.
+The `/admin` planner manages tracks and MCQs, and `adminAuditLogs` stores the
+actor, action, target track, summary, and timestamp for each content change.
 
 ### Adaptive quiz attempts
 
@@ -237,7 +251,8 @@ Firestore collection names and main document contents:
 | Collection | Document ID | Purpose |
 |---|---|---|
 | `quizzes` | Track ID, e.g. `java` | Track metadata and question list |
-| `users` | Random user UUID | Name, normalized email, password hash, created/login timestamps |
+| `users` | Random user UUID | Name, normalized email, password hash, created/login timestamps, optional `role` (`player` or `admin`) |
+| `adminAuditLogs` | Random event UUID | Admin content action, actor ID, track ID, summary, timestamp |
 | `userEmailLookups` | SHA-256 hex of normalized email | Maps email key to user ID; supports unique registration and lookup |
 | `results` | Attempt UUID | Score, user/track metadata, completion time, answer reviews |
 | `playerProgress` | User ID | XP, current streak, last played UTC date, completed attempts, badges |
@@ -365,6 +380,8 @@ Firestore before directing the application at the migrated data.
 - Passwords use PBKDF2-HMAC-SHA256 with a per-password random salt and
   120,000 iterations. Never log passwords, hashes, or credential JSON.
 - Account routes require login for quiz, room, profile, and result actions.
+- `/admin` routes require an account whose Firestore `role` is `admin`; the
+  role is rechecked on every planner request.
 - State-changing forms use session-bound CSRF tokens.
 - Login rotates the session ID; cookies are configured HttpOnly.
 - `web.xml` configures a 24-hour inactivity timeout. The browser cookie is
@@ -384,13 +401,14 @@ Firestore before directing the application at the migrated data.
 
 ## 11. Extending the project
 
-### Add or change questions
+### Manage quiz tracks and questions
 
-Edit `QuizCatalog.java`. Keep each question ID unique within its track and set
-the correct option index against the original options list. Each question
-includes its difficulty and explanation. Since Firestore seed merging
-preserves existing IDs, choose a new ID for new content or explicitly update
-the existing Firestore document when replacing content already seeded.
+Use the `/admin` planner for live quiz content. Track IDs are lowercase slugs
+and cannot be changed after creation. Each question has two to six unique
+options, one correct-option index, a difficulty, an explanation, and a status.
+Use archive status instead of deleting content so past result reviews remain
+available. `QuizCatalog.java` supplies only starter content for tracks not yet
+created in Firestore; it is not the live authoring interface.
 
 ### Add a feature
 

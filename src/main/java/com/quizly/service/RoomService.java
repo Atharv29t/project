@@ -43,7 +43,7 @@ public final class RoomService implements AutoCloseable {
     }
 
     public synchronized RoomSnapshot create(User host, String quizId) {
-        var quiz = quizzes.findById(quizId)
+        var quiz = quizzes.findPublishedById(quizId)
                 .orElseThrow(() -> new IllegalArgumentException("Choose a valid quiz for the room."));
         purgeExpired();
         String code;

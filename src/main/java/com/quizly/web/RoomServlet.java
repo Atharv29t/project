@@ -49,7 +49,7 @@ public final class RoomServlet extends HttpServlet {
             }
         } else {
             QuizRepository quizzes = WebSupport.service(request, App.QUIZ_REPOSITORY);
-            request.setAttribute("quizzes", quizzes.findAll());
+            request.setAttribute("quizzes", quizzes.findPublished());
         }
         WebSupport.forward(request, response, "room");
     }

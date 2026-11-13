@@ -32,7 +32,7 @@ public final class LeaderboardServlet extends HttpServlet {
         QuizRepository quizRepository = WebSupport.service(request, App.QUIZ_REPOSITORY);
 
         String requestedQuizId = request.getParameter("quiz");
-        Quiz selectedQuiz = quizRepository.findById(requestedQuizId).orElse(null);
+        Quiz selectedQuiz = quizRepository.findPublishedById(requestedQuizId).orElse(null);
         String selectedQuizId = selectedQuiz == null ? null : selectedQuiz.getId();
 
         List<LeaderboardEntry> entries = leaderboard.topEntries(selectedQuizId, 10);
@@ -41,7 +41,7 @@ public final class LeaderboardServlet extends HttpServlet {
         request.setAttribute(App.ACTIVE_NAV, "leaderboard");
         request.setAttribute("entries", entries);
         request.setAttribute("stats", stats);
-        request.setAttribute("quizzes", quizRepository.findAll());
+        request.setAttribute("quizzes", quizRepository.findPublished());
         request.setAttribute("selectedQuizId", selectedQuizId);
         request.setAttribute(App.LAST_RESULT_ID, lastResultId);
 

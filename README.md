@@ -29,6 +29,8 @@ development setup, production hosting, and handover notes, see
 - Two once-per-quiz power-ups: 50/50 and double points. Each can be used once
   per attempt; double points adds one point and 10 XP for a correct answer.
 - Voice mode reads questions and choices aloud and can select a spoken answer.
+- A protected admin quiz planner manages tracks and MCQs, including drafts,
+  publishing, archiving, restoring and a content change log.
 - Live room-code games with 2–20 signed-in players and a WebSocket leaderboard.
 - Restart-safe leaderboard (top 10) by quiz and overall.
 - Basic CSRF protection, 24-hour servlet-session inactivity timeout, UTF-8
@@ -157,6 +159,29 @@ mvn test
 | `/ws/room/{code}/{token}` | WebSocket | Authenticated live room status and leaderboard updates |
 | `/result` | GET | Show percentage, feedback and answer review |
 | `/leaderboard` | GET | Top 10 results, optionally filtered with `?quiz=java` |
+| `/admin` | GET, POST | Admin-only quiz track and MCQ planner |
+
+## Grant the first admin access
+
+The planner uses the normal Quizly account and login flow. Register the chosen
+admin account through the site, then update that user's Firestore document in
+the `users` collection to include:
+
+```json
+{ "role": "admin" }
+```
+
+Use the user document ID belonging to the intended account. Do not create a
+shared admin password, add admin selection to registration, or store passwords
+in Firestore as plain text. Accounts without a `role` field and new accounts
+are treated as players. The server checks the role from Firestore for every
+`/admin` request, so changing the role back to `player` removes access.
+
+The planner can create and edit quiz tracks and questions, save drafts, publish
+content, archive and restore it, and review recent changes. A track needs at
+least two published questions at each difficulty before it can be published.
+Archived content stays stored and is omitted from new quiz attempts; saved
+result reviews are retained.
 
 ## Move existing MongoDB data to Firestore
 
@@ -258,7 +283,11 @@ src/test/java/com/quizly  # JUnit tests, using an in-memory document store
 7. Show the result review and the room leaderboard updating live.
 8. Show the console test report (`mvn test`) and the existing leaderboard.
 
-## Adding a new quiz
+## Initial built-in quiz catalogue
+
+For normal quiz authoring, use the admin planner described above. The source
+catalogue below is for adding default content that should be included when a
+new quiz document is first seeded; it is not the way to edit live quiz content.
 
 Open `src/main/java/com/quizly/data/QuizCatalog.java` and add another
 `register(catalogue, new Quiz(...))` inside the static block:

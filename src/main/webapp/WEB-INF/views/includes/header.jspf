@@ -32,21 +32,40 @@
         </a>
 
         <nav class="site-nav" aria-label="Main navigation">
-            <a href="${ctx}/" class="${activeNav eq 'home' ? 'is-active' : ''}">Quizzes</a>
-            <a href="${ctx}/leaderboard" class="${activeNav eq 'leaderboard' ? 'is-active' : ''}">Leaderboard</a>
-            <c:if test="${not empty sessionScope.currentUser}">
-                <a href="${ctx}/profile" class="${activeNav eq 'profile' ? 'is-active' : ''}">My scores</a>
-                <a href="${ctx}/room" class="${activeNav eq 'room' ? 'is-active' : ''}">Live rooms</a>
-            </c:if>
+            <c:choose>
+                <c:when test="${sessionScope.currentUser.admin}">
+                    <a href="${ctx}/admin" class="${activeNav eq 'admin' ? 'is-active' : ''}">Quiz planner</a>
+                    <a href="${ctx}/admin#changeLog">Change log</a>
+                    <a href="${ctx}/">View site</a>
+                </c:when>
+                <c:otherwise>
+                    <a href="${ctx}/" class="${activeNav eq 'home' ? 'is-active' : ''}">Quizzes</a>
+                    <a href="${ctx}/leaderboard" class="${activeNav eq 'leaderboard' ? 'is-active' : ''}">Leaderboard</a>
+                    <c:if test="${not empty sessionScope.currentUser}">
+                        <a href="${ctx}/profile" class="${activeNav eq 'profile' ? 'is-active' : ''}">My scores</a>
+                        <a href="${ctx}/room" class="${activeNav eq 'room' ? 'is-active' : ''}">Live rooms</a>
+                    </c:if>
+                </c:otherwise>
+            </c:choose>
         </nav>
 
         <div class="nav-actions">
             <c:choose>
                 <c:when test="${not empty sessionScope.currentUser}">
-                    <a class="player-chip" href="${ctx}/profile" title="Open your profile">
-                        <span class="player-avatar">${fn:escapeXml(sessionScope.currentUser.initials)}</span>
-                        <span><c:out value="${sessionScope.currentUser.name}" /></span>
-                    </a>
+                    <c:choose>
+                        <c:when test="${sessionScope.currentUser.admin}">
+                            <span class="player-chip" title="Administrator account">
+                                <span class="player-avatar">${fn:escapeXml(sessionScope.currentUser.initials)}</span>
+                                <span><c:out value="${sessionScope.currentUser.name}" /></span>
+                            </span>
+                        </c:when>
+                        <c:otherwise>
+                            <a class="player-chip" href="${ctx}/profile" title="Open your profile">
+                                <span class="player-avatar">${fn:escapeXml(sessionScope.currentUser.initials)}</span>
+                                <span><c:out value="${sessionScope.currentUser.name}" /></span>
+                            </a>
+                        </c:otherwise>
+                    </c:choose>
                     <form class="logout-form" method="post" action="${ctx}/logout">
                         <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
                         <button class="logout-btn" type="submit" title="Log out">
@@ -55,6 +74,9 @@
                         </button>
                     </form>
                     <c:choose>
+                        <c:when test="${sessionScope.currentUser.admin}">
+                            <a class="btn btn-primary btn-sm" href="${ctx}/">View site</a>
+                        </c:when>
                         <c:when test="${not empty sessionScope.attempt}">
                             <a class="btn btn-primary btn-sm" href="${ctx}/quiz">Resume</a>
                         </c:when>

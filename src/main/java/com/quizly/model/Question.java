@@ -15,6 +15,7 @@ public final class Question {
     private final int correctOptionIndex;
     private final String explanation;
     private final int difficulty;
+    private final ContentStatus status;
 
     public Question(String id, String prompt, List<String> options, int correctOptionIndex, String explanation) {
         this(id, prompt, options, correctOptionIndex, explanation, 2);
@@ -22,12 +23,18 @@ public final class Question {
 
     public Question(String id, String prompt, List<String> options, int correctOptionIndex,
                     String explanation, int difficulty) {
+        this(id, prompt, options, correctOptionIndex, explanation, difficulty, ContentStatus.PUBLISHED);
+    }
+
+    public Question(String id, String prompt, List<String> options, int correctOptionIndex,
+                    String explanation, int difficulty, ContentStatus status) {
         this.id = Objects.requireNonNull(id, "id");
         this.prompt = Objects.requireNonNull(prompt, "prompt");
         this.options = List.copyOf(Objects.requireNonNull(options, "options"));
         this.correctOptionIndex = correctOptionIndex;
         this.explanation = Objects.requireNonNull(explanation, "explanation");
         this.difficulty = difficulty;
+        this.status = Objects.requireNonNull(status, "status");
 
         if (options.size() < 2) {
             throw new IllegalArgumentException("A question needs at least two options");
@@ -52,6 +59,10 @@ public final class Question {
         return options;
     }
 
+    public String getOptionsMultiline() {
+        return String.join("\n", options);
+    }
+
     public int getCorrectOptionIndex() {
         return correctOptionIndex;
     }
@@ -66,5 +77,17 @@ public final class Question {
 
     public int getDifficulty() {
         return difficulty;
+    }
+
+    public ContentStatus getStatus() {
+        return status;
+    }
+
+    public String getStatusValue() {
+        return status.firestoreValue();
+    }
+
+    public boolean isPublished() {
+        return status == ContentStatus.PUBLISHED;
     }
 }

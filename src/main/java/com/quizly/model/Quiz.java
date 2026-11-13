@@ -18,9 +18,24 @@ public final class Quiz {
     private final int estimatedMinutes;
     private final String accentColor;
     private final List<Question> questions;
+    private final ContentStatus status;
+    private final int revision;
 
     public Quiz(String id, String title, String tagline, String description, String icon,
                 String level, int estimatedMinutes, String accentColor, List<Question> questions) {
+        this(id, title, tagline, description, icon, level, estimatedMinutes, accentColor,
+                questions, ContentStatus.PUBLISHED, 0);
+    }
+
+    public Quiz(String id, String title, String tagline, String description, String icon,
+                String level, int estimatedMinutes, String accentColor, List<Question> questions,
+                ContentStatus status) {
+        this(id, title, tagline, description, icon, level, estimatedMinutes, accentColor, questions, status, 0);
+    }
+
+    public Quiz(String id, String title, String tagline, String description, String icon,
+                String level, int estimatedMinutes, String accentColor, List<Question> questions,
+                ContentStatus status, int revision) {
         this.id = Objects.requireNonNull(id, "id");
         this.title = Objects.requireNonNull(title, "title");
         this.tagline = Objects.requireNonNull(tagline, "tagline");
@@ -30,6 +45,8 @@ public final class Quiz {
         this.estimatedMinutes = estimatedMinutes;
         this.accentColor = Objects.requireNonNull(accentColor, "accentColor");
         this.questions = List.copyOf(Objects.requireNonNull(questions, "questions"));
+        this.status = Objects.requireNonNull(status, "status");
+        this.revision = Math.max(0, revision);
     }
 
     public String getId() {
@@ -70,5 +87,21 @@ public final class Quiz {
 
     public int getQuestionCount() {
         return questions.size();
+    }
+
+    public ContentStatus getStatus() {
+        return status;
+    }
+
+    public String getStatusValue() {
+        return status.firestoreValue();
+    }
+
+    public boolean isPublished() {
+        return status == ContentStatus.PUBLISHED;
+    }
+
+    public int getRevision() {
+        return revision;
     }
 }

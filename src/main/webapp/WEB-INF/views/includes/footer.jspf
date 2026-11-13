@@ -16,27 +16,45 @@
     <c:set var="playLabel" value="Log in" />
 </c:if>
 
-<nav class="mobile-tabs" aria-label="Mobile navigation">
-    <a class="tab-item ${activeNav eq 'home' ? 'is-active' : ''}" href="${ctx}/">
-        <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
-        <span>Home</span>
-    </a>
-    <a class="tab-item" href="${ctx}/#quizPicker">
-        <svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg>
-        <span>Tracks</span>
-    </a>
-    <a class="tab-play" href="${playHref}" aria-label="${playLabel}">
-        <span class="tab-play-btn"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span>
-        <span>${playLabel}</span>
-    </a>
-    <a class="tab-item ${activeNav eq 'leaderboard' ? 'is-active' : ''}" href="${ctx}/leaderboard">
-        <svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>
-        <span>Board</span>
-    </a>
-    <a class="tab-item ${activeNav eq 'result' ? 'is-active' : ''}" href="${reviewHref}">
-        <svg class="icon" aria-hidden="true"><use href="#i-review"/></svg>
-        <span>Review</span>
-    </a>
+<nav class="mobile-tabs ${sessionScope.currentUser.admin ? 'has-admin' : ''}" aria-label="Mobile navigation">
+    <c:choose>
+        <c:when test="${sessionScope.currentUser.admin}">
+            <a class="tab-item ${activeNav eq 'admin' ? 'is-active' : ''}" href="${ctx}/admin">
+                <svg class="icon" aria-hidden="true"><use href="#i-list"/></svg>
+                <span>Planner</span>
+            </a>
+            <a class="tab-item" href="${ctx}/admin#changeLog">
+                <svg class="icon" aria-hidden="true"><use href="#i-review"/></svg>
+                <span>Changes</span>
+            </a>
+            <a class="tab-item ${activeNav eq 'home' ? 'is-active' : ''}" href="${ctx}/">
+                <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+                <span>View site</span>
+            </a>
+        </c:when>
+        <c:otherwise>
+            <a class="tab-item ${activeNav eq 'home' ? 'is-active' : ''}" href="${ctx}/">
+                <svg class="icon" aria-hidden="true"><use href="#i-home"/></svg>
+                <span>Home</span>
+            </a>
+            <a class="tab-item" href="${ctx}/#quizPicker">
+                <svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg>
+                <span>Tracks</span>
+            </a>
+            <a class="tab-play" href="${playHref}" aria-label="${playLabel}">
+                <span class="tab-play-btn"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span>
+                <span>${playLabel}</span>
+            </a>
+            <a class="tab-item ${activeNav eq 'leaderboard' ? 'is-active' : ''}" href="${ctx}/leaderboard">
+                <svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>
+                <span>Board</span>
+            </a>
+            <a class="tab-item ${activeNav eq 'result' ? 'is-active' : ''}" href="${reviewHref}">
+                <svg class="icon" aria-hidden="true"><use href="#i-review"/></svg>
+                <span>Review</span>
+            </a>
+        </c:otherwise>
+    </c:choose>
 </nav>
 
 <footer class="site-footer">
