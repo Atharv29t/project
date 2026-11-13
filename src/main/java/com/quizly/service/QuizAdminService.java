@@ -34,8 +34,8 @@ public final class QuizAdminService {
         if (existing == null && rawRevision != null && !rawRevision.isBlank()) {
             throw new IllegalStateException("This track no longer exists. Reload the planner.");
         }
-        if (existing != null && rawRevision == null) {
-            throw new IllegalStateException("This track changed while you were editing it. Reload and try again.");
+        if (existing != null && (rawRevision == null || rawRevision.isBlank())) {
+            throw new IllegalStateException("A track with this ID already exists. Open it from the track list to edit it.");
         }
 
         String title = bounded(rawTitle, "Title", 2, 80);
@@ -161,10 +161,16 @@ public final class QuizAdminService {
                 byDifficulty[question.getDifficulty()]++;
             }
         }
+        List<String> missing = new ArrayList<>();
+        String[] names = {"", "Easy", "Medium", "Hard"};
         for (int difficulty = 1; difficulty <= 3; difficulty++) {
             if (byDifficulty[difficulty] < 2) {
-                throw new IllegalArgumentException("A published track needs at least two published questions at each difficulty.");
+                missing.add(names[difficulty] + " (" + byDifficulty[difficulty] + "/2 published)");
             }
+        }
+        if (!missing.isEmpty()) {
+            throw new IllegalArgumentException("This track needs at least two published questions at each difficulty. Still needed: "
+                    + String.join(", ", missing) + ".");
         }
     }
 

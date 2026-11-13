@@ -2719,6 +2719,10 @@ h1, h2, h3, p, dl, dd { overflow-wrap: anywhere; }
 .admin-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .admin-hint, .admin-empty { color: var(--muted); font-size: 13px; }
 .admin-hint { margin: 0; }
+.admin-publish-check { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 13px; background: #fffaf4; color: var(--muted); font-size: 12px; }
+.admin-publish-check strong { width: 100%; color: var(--ink); font-size: 13px; }
+.admin-publish-check b { color: var(--ink); }
+.admin-form-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .admin-question-list { display: grid; }
 .admin-question-row { display: flex; align-items: center; gap: 13px; padding: 13px 0; border-top: 1px solid var(--line); }
 .admin-question-number { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border-radius: 10px; background: #fff0df; font-weight: 850; }
@@ -2731,6 +2735,9 @@ h1, h2, h3, p, dl, dd { overflow-wrap: anywhere; }
 .admin-audit-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 12px; }
 .admin-audit-row strong { flex: 1; }
 .admin-audit-row > span:not(.status-pill), .admin-audit-row time { color: var(--muted); }
+.admin-audit-changes { display: grid; flex-basis: 100%; gap: 7px; padding: 8px 0 0 12px; border-left: 2px solid var(--line); }
+.admin-audit-change { display: grid; grid-template-columns: minmax(110px, .45fr) minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; gap: 8px; color: var(--muted); overflow-wrap: anywhere; }
+.admin-audit-change b { color: var(--ink); }
 
 @media (max-width: 820px) {
     .admin-layout { grid-template-columns: 1fr; }
@@ -2744,4 +2751,7 @@ h1, h2, h3, p, dl, dd { overflow-wrap: anywhere; }
     .admin-question-row { flex-wrap: wrap; }
     .admin-question-copy { flex-basis: calc(100% - 50px); }
     .admin-audit-row { align-items: flex-start; flex-direction: column; }
+    .admin-audit-changes { width: 100%; }
+    .admin-audit-change { grid-template-columns: 1fr; gap: 3px; }
+    .admin-audit-change > span[aria-hidden="true"] { display: none; }
 }

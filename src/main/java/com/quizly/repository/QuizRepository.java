@@ -112,7 +112,8 @@ public final class QuizRepository {
             }
             String resolvedAction = action == null ? (old == null ? "quiz_created" : "quiz_updated") : action;
             transaction.create(AUDIT_LOGS, auditId,
-                    auditEntry(actorId, resolvedAction, "quiz", quiz.getId(), quiz.getId(), summary, now));
+                    auditEntry(actorId, resolvedAction, "quiz", quiz.getId(), quiz.getId(), summary, now,
+                            describeChanges(old, quiz)));
             return null;
         });
         invalidateCache();
@@ -132,7 +133,8 @@ public final class QuizRepository {
     }
 
     private Map<String, Object> auditEntry(String actorId, String action, String targetType,
-                                           String targetId, String quizId, String title, Instant at) {
+                                           String targetId, String quizId, String title, Instant at,
+                                           List<Map<String, Object>> changes) {
         Map<String, Object> entry = new LinkedHashMap<>();
         entry.put("actorId", actorId);
         entry.put("action", action);
@@ -140,8 +142,118 @@ public final class QuizRepository {
         entry.put("targetId", targetId);
         entry.put("quizId", quizId);
         entry.put("summary", title);
+        entry.put("changes", changes);
         entry.put("timestamp", Date.from(at));
         return entry;
+    }
+
+    private List<Map<String, Object>> describeChanges(Map<String, Object> old, Quiz quiz) {
+        List<Map<String, Object>> changes = new ArrayList<>();
+        Map<String, Object> nextFields = new LinkedHashMap<>();
+        nextFields.put("title", quiz.getTitle());
+        nextFields.put("tagline", quiz.getTagline());
+        nextFields.put("description", quiz.getDescription());
+        nextFields.put("icon", quiz.getIcon());
+        nextFields.put("difficulty", quiz.getLevel());
+        nextFields.put("estimatedMinutes", quiz.getEstimatedMinutes());
+        nextFields.put("accentColor", quiz.getAccentColor());
+        nextFields.put("status", quiz.getStatus().firestoreValue());
+        Map<String, String> labels = Map.of(
+                "title", "Title",
+                "tagline", "Tagline",
+                "description", "Description",
+                "icon", "Icon",
+                "difficulty", "Level",
+                "estimatedMinutes", "Estimated minutes",
+                "accentColor", "Accent colour",
+                "status", "Track status"
+        );
+
+        for (Map.Entry<String, Object> field : nextFields.entrySet()) {
+            Object previous = old == null ? null : old.get(field.getKey());
+            if (old == null || !java.util.Objects.equals(stringValue(previous), stringValue(field.getValue()))) {
+                changes.add(auditChange(labels.get(field.getKey()), display(previous), display(field.getValue())));
+            }
+        }
+
+        Map<String, Map<?, ?>> previousQuestions = questionDocuments(old);
+        for (Question question : quiz.getQuestions()) {
+            Map<?, ?> previous = previousQuestions.remove(question.getId());
+            String currentSummary = questionSummary(question);
+            if (previous == null) {
+                changes.add(auditChange("Question added", "—", currentSummary));
+            } else {
+                String previousSummary = questionSummary(previous);
+                if (!previousSummary.equals(currentSummary)) {
+                    changes.add(auditChange("Question updated", previousSummary, currentSummary));
+                }
+            }
+        }
+        previousQuestions.values().forEach(removed -> changes.add(
+                auditChange("Question removed", questionSummary(removed), "—")));
+        return changes;
+    }
+
+    private Map<String, Map<?, ?>> questionDocuments(Map<String, Object> quizDocument) {
+        Map<String, Map<?, ?>> byId = new LinkedHashMap<>();
+        if (quizDocument == null || !(quizDocument.get("questions") instanceof List<?> questions)) {
+            return byId;
+        }
+        for (Object item : questions) {
+            if (item instanceof Map<?, ?> question && question.get("id") instanceof String id) {
+                byId.put(id, question);
+            }
+        }
+        return byId;
+    }
+
+    private String questionSummary(Question question) {
+        String options = java.util.stream.IntStream.range(0, question.getOptions().size())
+                .mapToObj(index -> (index + 1) + ". " + question.getOptions().get(index))
+                .collect(java.util.stream.Collectors.joining("; "));
+        return "Prompt: " + question.getPrompt() + " | Options: " + options
+                + " | Correct: " + (question.getCorrectOptionIndex() + 1)
+                + " | Difficulty: " + difficultyName(question.getDifficulty())
+                + " | Status: " + question.getStatus().firestoreValue()
+                + " | Explanation: " + question.getExplanation();
+    }
+
+    private String questionSummary(Map<?, ?> question) {
+        List<String> options = strings(question.get("options"));
+        String optionText = java.util.stream.IntStream.range(0, options.size())
+                .mapToObj(index -> (index + 1) + ". " + options.get(index))
+                .collect(java.util.stream.Collectors.joining("; "));
+        int correct = number(question.get("correctOptionIndex"), 0) + 1;
+        return "Prompt: " + string(question.get("prompt"), "") + " | Options: " + optionText
+                + " | Correct: " + correct
+                + " | Difficulty: " + difficultyName(number(question.get("difficulty"), 1))
+                + " | Status: " + string(question.get("status"), "published")
+                + " | Explanation: " + string(question.get("explanation"), "");
+    }
+
+    private String difficultyName(int difficulty) {
+        return switch (difficulty) {
+            case 1 -> "Easy";
+            case 2 -> "Medium";
+            case 3 -> "Hard";
+            default -> "Unknown";
+        };
+    }
+
+    private Map<String, Object> auditChange(String field, String before, String after) {
+        Map<String, Object> change = new LinkedHashMap<>();
+        change.put("field", field);
+        change.put("before", before);
+        change.put("after", after);
+        return change;
+    }
+
+    private String stringValue(Object value) {
+        return value == null ? null : value.toString();
+    }
+
+    private String display(Object value) {
+        return value == null ? "—" : value.toString();
     }
 
     private Instant auditTime(Map<String, Object> entry) {
